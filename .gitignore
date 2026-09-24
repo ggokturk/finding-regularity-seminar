@@ -1,0 +1,27 @@
+# LaTeX build products and local previews
+.build/
+build/
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.nav
+*.out
+*.run.xml
+*.snm
+*.synctex.gz
+*.toc
+*.vrb
+
+# Local preparation material
+.DS_Store
+.chart-data-*/
+.marprc.cjs
+cv.tex
+gokturk_paper_summaries.md
+scripts/
+papers/*
+!papers/README.md
