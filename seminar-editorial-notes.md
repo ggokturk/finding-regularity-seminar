@@ -1,24 +1,24 @@
 # Faculty seminar editorial notes
 
-The deck has **25 main slides**, followed by a divider and **14 backup slides**: **40 static PDF pages**. The title is **Finding Regularity: High-Performance Computing for Graph Algorithms**.
+The deck has **26 main slides**, followed by a divider and **14 backup slides**: **41 static PDF pages**. The title is **Finding Regularity: High-Performance Computing for Graph Algorithms**.
 
 Prepared narration totals **30:50**. Reserve **35 minutes** for delivery with pauses and brief interruptions, with **40 minutes as the ceiling** in the one-hour seminar and interview session. This leaves roughly 20–25 minutes for discussion and interview questions. Timings are rehearsal targets, not measured delivery times.
 
 ## Opening revision for a CS faculty audience
 
-Slide 9 combines the original **Component labels across samples** and **Reconstructing sampled edges** slides directly. The smaller right column credits MixGreedy for the component step and retains the 1--4--3 example and minimum-label equation as context. Hash-based edge sampling is the title and central subject: its large equation appears before the worked example, and the sampling explanation occupies nearly two-thirds of the slide. The left column retains the stored seeds 5, 4, 14, 7; XOR with edge hash 6; results 3, 2, 8, 1; threshold 7; and the edge-membership equation.
+Slide 9 is devoted to **Hash-based edge sampling**. The large XOR threshold equation and the original four-sample calculation fill the slide. Its narration connects reconstruction, fused sample updates, and DiFuseR scheduling; component labels are introduced later.
 
-The narration leads with hash-based edge sampling and follows its role in reconstruction, fused sample updates, and DiFuseR scheduling. MixGreedy is credited when the supporting component example is introduced. It explains the undirected component example briefly as the operation being accelerated. This preserves the original technical concepts for a CS faculty audience and connects directly to **Compute more, move less** on slide 10.
+Slide 11 uses generic state entries to motivate the remaining vertex-by-sample memory cost. Slide 12 puts **MixGreedy's component labels** beside **HyperFuseR's count-distinct sketch registers**. It retains the 1--4--3 example and minimum-label equation on the left and the original leading-zero table on the right. The comparison establishes what each representation stores and how it merges information. MixGreedy is credited for the component computation; the presenter's contribution is accelerating propagation through fused sampling and vectorization.
 
-The exact expression `X_r XOR h(u,v)` anchors slide 9. The methodology summary on slide 20 connects its roles in fused batched execution and DiFuseR scheduling. Its role extends beyond reconstructing samples: the narration explicitly previews DiFuseR's use of sample-key sorting for scheduling. Slide 14 repeats the expression and explains that FASST sorts the input keys, preserving their sample states and decisions. It does not sort each edge's XOR outputs or assume an arbitrary hash would yield the same grouping.
+Slide 13 preserves the worked four-sample masked register merge on its own slide. This keeps the exact/approximate representation comparison readable and gives the active-edge mask, inactive sample, and idempotent maximum operation their own explanation.
 
-The merged slide retains the original two slides' combined **1:45** explanation time. The separate copies added to backup in the previous revision have been removed. The existing implementation backup retains the detailed hash definition. All later cumulative timings are adjusted by 30 seconds; the prepared talk now totals 30:50.
+The exact expression `X_r XOR h(u,v)` returns on the DiFuseR scheduling slide, now slide 15, and in the methodology summary on slide 21. FASST sorts input keys with their sample state; it does not sort each edge's XOR outputs.
 
-The shorter HPC introduction and early spoken graph-learning connection remain. The influence-maximization script traces one sample and then its Monte Carlo average. Slides, source comments, embedded cues, and the narrative timing table are synchronized. Every slide is static.
+Timing is redistributed: slide 9 takes 1:25; the representation comparison takes 1:20; masked sketch propagation takes 1:10. The full prepared delivery remains **30:50**. All slide numbers, cumulative timings, narration, and embedded cues are synchronized. Slides remain static.
 
 ## Technical boundaries retained
 
-- Main slide 9 explicitly treats undirected graphs. The minimum-label update identifies connected components; it is not a directed reachability algorithm.
+- The component-label example on slide 12 explicitly treats undirected graphs. Its minimum-label update identifies connected components; it is not a directed reachability algorithm.
 - The main-slide XOR construction uses a symmetric hash for undirected edges. Reusing keys establishes repeatability across passes and directions, not joint edge independence.
 - The fused-sampling comparison supports on-demand sampling. Samples execute separately in that comparison; it does not isolate the sample-lane transformation.
 - Compact registers still occupy a vertex-by-sample structure. They change entry size, operations, and approximation rather than removing that structure's dimensions.
@@ -47,14 +47,15 @@ Only source material needed to explain the algorithms was consulted. These proje
 
 ## Rehearsal priorities
 
-- **Slide 8, ending at 8:10:** slowly trace the scattered column and adjacent row. Keep the distinction between logical state accesses and physical memory transactions.
-- **Slide 9, ending at 9:55:** lead with the hash-based sampling rule and its worked XOR example; connect reconstruction, sample-lane vectorization, and DiFuseR scheduling. Credit MixGreedy when introducing its component step. Use the label example briefly as context and preview DiFuseR scheduling.
-- **Slide 10, ending at 11:10:** identify the stored graph write/read that fusion removes, then state the result and its sequential comparison scope.
-- **Slide 12, ending at 14:05:** distinguish a register value from a count, then trace the inactive lane through the merge.
-- **Slide 14, ending at 16:45:** follow one sample identity across assignments. Explain why skipping a warp differs from removing a sample's contribution.
-- **Slides 17–18, ending at 22:45:** demonstrate locality opportunity, then explain conditional residual uniformity.
-- **Slide 19, ending at 23:45:** state the historical measurement scope once.
-- **Slide 24, ending at 30:20:** present the scheduling hypothesis as proposed work, with tuned baselines, unseen workloads, total cost, and fixed accuracy as evaluation criteria.
+- **Slide 8, ending at 8:10:** trace the scattered column and adjacent row; distinguish logical accesses from physical memory transactions.
+- **Slide 9, ending at 9:35:** focus on the XOR sampling rule, its numeric example, and its roles in reconstruction, vectorization, and DiFuseR scheduling.
+- **Slide 10, ending at 10:50:** explain the avoided stored-graph write/read, then state the result and its sequential comparison scope.
+- **Slide 12, ending at 12:55:** introduce component labels and count-distinct registers together. Credit MixGreedy and distinguish exact component identity from a rare-pattern statistic.
+- **Slide 13, ending at 14:05:** trace the inactive sample through the masked merge; explain idempotence and the accuracy/rebuilding scope.
+- **Slide 15, ending at 16:45:** follow a sample identity across assignments; explain whole-warp skips without removing sample contributions.
+- **Slides 18–19, ending at 22:45:** explain locality opportunity, then conditional residual uniformity.
+- **Slide 20, ending at 23:45:** state the historical measurement scope once.
+- **Slide 25, ending at 30:20:** present the future scheduler as proposed work with tuned baselines, unseen workloads, total cost, and fixed accuracy.
 
 The 35-minute delivery slot includes about four minutes beyond the prepared narration. Rehearse aloud with pointing and pauses. If discussion runs long, shorten synthesis and current-project detail while preserving time to explain the independent research agenda.
 
