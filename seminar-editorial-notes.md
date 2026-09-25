@@ -6,9 +6,9 @@ Prepared narration totals **30:50**. Reserve **35 minutes** for delivery with pa
 
 ## Opening revision for a CS faculty audience
 
-Slide 9 combines the original **Component labels across samples** and **Reconstructing sampled edges** slides directly. The right column retains the 1--4--3 component, minimum-label propagation equation, and per-sample lane interpretation. The left column retains the stored seeds 5, 4, 14, 7; XOR with edge hash 6; results 3, 2, 8, 1; threshold 7; and the edge-membership equation.
+Slide 9 combines the original **Component labels across samples** and **Reconstructing sampled edges** slides directly. The smaller right column credits MixGreedy for the component step and retains the 1--4--3 example and minimum-label equation as context. The title and lead sentence foreground fused sampling and vectorized updates as the presenter's contribution. The left column retains the stored seeds 5, 4, 14, 7; XOR with edge hash 6; results 3, 2, 8, 1; threshold 7; and the edge-membership equation.
 
-The narration explains edge reconstruction on the left first, then uses those active edges in the component-label update on the right. It explicitly changes from the earlier directed running example to the undirected component algorithm. This preserves the original technical concepts for a CS faculty audience and connects directly to **Compute more, move less** on slide 10.
+The narration credits MixGreedy at the outset, then concentrates on XOR reconstruction and its fusion with vectorized updates. It explains the undirected component example briefly as the operation being accelerated. This preserves the original technical concepts for a CS faculty audience and connects directly to **Compute more, move less** on slide 10.
 
 The exact expression `X_r XOR h(u,v)` is emphasized on slide 9. Its role extends beyond reconstructing samples: the narration explicitly previews DiFuseR's use of sample-key sorting for scheduling. Slide 14 repeats the expression and explains that FASST sorts the input keys, preserving their sample states and decisions. It does not sort each edge's XOR outputs or assume an arbitrary hash would yield the same grouping.
 
@@ -48,7 +48,7 @@ Only source material needed to explain the algorithms was consulted. These proje
 ## Rehearsal priorities
 
 - **Slide 8, ending at 8:10:** slowly trace the scattered column and adjacent row. Keep the distinction between logical state accesses and physical memory transactions.
-- **Slide 9, ending at 9:55:** trace the XOR calculation on the left, then explain the component update on the right. Connect repeated propagation passes to the need for repeatable edge decisions.
+- **Slide 9, ending at 9:55:** credit MixGreedy for the component step, then focus on XOR reconstruction, sample-lane vectorization, and their performance mechanisms. Use the label example briefly as context and preview DiFuseR scheduling.
 - **Slide 10, ending at 11:10:** identify the stored graph write/read that fusion removes, then state the result and its sequential comparison scope.
 - **Slide 12, ending at 14:05:** distinguish a register value from a count, then trace the inactive lane through the merge.
 - **Slide 14, ending at 16:45:** follow one sample identity across assignments. Explain why skipping a warp differs from removing a sample's contribution.

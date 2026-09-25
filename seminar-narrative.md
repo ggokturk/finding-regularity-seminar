@@ -14,7 +14,7 @@ Use first person for your intellectual decisions and “we” for joint results.
 | 6 | Influence maximization | 1:10 | 4:45 |
 | 7 | The hidden regular dimension | 1:00 | 5:45 |
 | 8 | Reorganizing execution | 2:25 | 8:10 |
-| 9 | Component labels and reconstructed edges | 1:45 | 9:55 |
+| 9 | Fused sampling and vectorized label updates | 1:45 | 9:55 |
 | 10 | Compute more, move less | 1:15 | 11:10 |
 | 11 | State becomes expensive | 0:45 | 11:55 |
 | 12 | Compact mergeable state | 2:10 | 14:05 |
@@ -100,9 +100,9 @@ Larger batches can reuse more topology, but they also increase the state footpri
 
 We have changed how work is grouped. Let me now show how we recover each sample's active edges, then use them in the label update.
 
-## 9. Component labels and reconstructed edges — 1:45
+## 9. Fused sampling and vectorized label updates — 1:45
 
-The earlier example used directed edges. Now consider undirected graphs, where a source reaches every vertex in its connected component.
+The component computation comes from MixGreedy. My contribution is to accelerate it by fusing edge reconstruction with vectorized updates across samples.
 
 On the left, store one random seed X-r per sample and a symmetric hash per edge. This seed identifies the sample, separately from the influence source.
 
@@ -112,11 +112,11 @@ Keep the expression X-r XOR h of u-v in mind. For a fixed edge, the hash is shar
 
 Reusing the inputs reproduces the decisions on every pass and in both directions. Repeatability alone does not establish independent edge sampling.
 
-Now use those active edges in the component-label update on the right. Initialize each label with its vertex ID, then repeatedly take the minimum over the vertex and its active neighbors. Vertices one, four, and three converge to label one.
+The right side gives the operation we accelerate. In the undirected case, minimum-label updates identify connected components: vertices one, four, and three converge to label one.
 
-Each lane maintains a label for a different sample and masks inactive edges. Label propagation is standard; my contribution is organizing it across samples.
+I execute those updates across samples, with adjacent labels in vector lanes and inactive edges masked. One edge access serves several samples, and reconstruction happens inside the traversal. This combines topology reuse and contiguous state access with avoiding stored sampled graphs.
 
-I fuse reconstruction with propagation. Labels remain in memory, but sampled graphs need not be stored. What does that tradeoff save?
+The next slide shows the performance benefit of fused sampling; vectorizing across samples is an additional optimization.
 
 ## 10. Compute more, move less — 1:15
 
