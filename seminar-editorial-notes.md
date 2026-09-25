@@ -6,9 +6,9 @@ Prepared narration totals **30:50**. Reserve **35 minutes** for delivery with pa
 
 ## Opening revision for a CS faculty audience
 
-Slide 9 combines the original **Component labels across samples** and **Reconstructing sampled edges** slides directly. The left column retains the 1--4--3 component, minimum-label propagation equation, and per-sample lane interpretation. The right column retains the stored seeds 5, 4, 14, 7; XOR with edge hash 6; results 3, 2, 8, 1; threshold 7; and the edge-membership equation.
+Slide 9 combines the original **Component labels across samples** and **Reconstructing sampled edges** slides directly. The right column retains the 1--4--3 component, minimum-label propagation equation, and per-sample lane interpretation. The left column retains the stored seeds 5, 4, 14, 7; XOR with edge hash 6; results 3, 2, 8, 1; threshold 7; and the edge-membership equation.
 
-The narration explains the label update first, then uses its need for fixed sampled edges to introduce reconstruction. It explicitly changes from the earlier directed running example to the undirected component algorithm. This preserves the original technical concepts for a CS faculty audience and connects directly to **Compute more, move less** on slide 10.
+The narration explains edge reconstruction on the left first, then uses those active edges in the component-label update on the right. It explicitly changes from the earlier directed running example to the undirected component algorithm. This preserves the original technical concepts for a CS faculty audience and connects directly to **Compute more, move less** on slide 10.
 
 The merged slide retains the original two slides' combined **1:45** explanation time. The separate copies added to backup in the previous revision have been removed. The existing implementation backup retains the detailed hash definition. All later cumulative timings are adjusted by 30 seconds; the prepared talk now totals 30:50.
 
@@ -46,7 +46,7 @@ Only source material needed to explain the algorithms was consulted. These proje
 ## Rehearsal priorities
 
 - **Slide 8, ending at 8:10:** slowly trace the scattered column and adjacent row. Keep the distinction between logical state accesses and physical memory transactions.
-- **Slide 9, ending at 9:55:** explain the component update on the left, then trace the XOR calculation on the right. Connect repeated propagation passes to the need for repeatable edge decisions.
+- **Slide 9, ending at 9:55:** trace the XOR calculation on the left, then explain the component update on the right. Connect repeated propagation passes to the need for repeatable edge decisions.
 - **Slide 10, ending at 11:10:** identify the stored graph write/read that fusion removes, then state the result and its sequential comparison scope.
 - **Slide 12, ending at 14:05:** distinguish a register value from a count, then trace the inactive lane through the merge.
 - **Slide 14, ending at 16:45:** follow one sample identity across assignments. Explain why skipping a warp differs from removing a sample's contribution.

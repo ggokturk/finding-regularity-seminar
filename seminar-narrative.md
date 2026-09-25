@@ -98,25 +98,23 @@ We still have to perform the required edge–sample work. The change is which up
 
 Larger batches can reuse more topology, but they also increase the state footprint and may include more inactive work. The useful batch size depends on the workload and memory hierarchy.
 
-We have changed how work is grouped. Let me now make the update performed by each sample lane concrete, and show how we recover its sampled edges.
+We have changed how work is grouped. Let me now show how we recover each sample's active edges, then use them in the label update.
 
 ## 9. Component labels and reconstructed edges — 1:45
 
 The earlier example used directed edges. Now consider undirected graphs, where a source reaches every vertex in its connected component.
 
-On the left, initialize each vertex label with its ID. Repeatedly take the smallest label among that vertex and its active neighbors. Vertices one, four, and three converge to label one.
-
-This is the update for the lanes on the previous slide: each lane maintains a label for a different sample and masks inactive edges. Label propagation is standard; my contribution is organizing it across samples.
-
-Every pass must use the same sampled edges. The right side shows how we recover those decisions without storing every sampled graph.
-
-Store one random seed per sample and a symmetric hash per edge. The random seed identifies the sample; it is distinct from the influence source.
+The left side shows how we recover the sampled edges. Store one random seed per sample and a symmetric hash per edge. The random seed identifies the sample; it is distinct from the influence source.
 
 For edge one–four, XOR hash six with the four seeds. The results are three, two, eight, and one. Threshold seven activates samples one, two, and four.
 
 Reusing these inputs recovers the same decision on every pass and in both directions. That establishes repeatability; independent edge sampling requires separate justification.
 
-I fuse this reconstruction with propagation across samples. Labels remain in memory, but sampled graphs need not be stored. What does that tradeoff save?
+Now use those active edges in the component-label update on the right. Initialize each vertex label with its ID. Repeatedly take the smallest label among that vertex and its active neighbors. Vertices one, four, and three converge to label one.
+
+This is the update for the lanes on the previous slide: each lane maintains a label for a different sample and masks inactive edges. Label propagation is standard; my contribution is organizing it across samples.
+
+Every pass uses the same reconstructed edges. I fuse reconstruction with propagation across samples. Labels remain in memory, but sampled graphs need not be stored. What does that tradeoff save?
 
 ## 10. Compute more, move less — 1:15
 

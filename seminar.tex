@@ -479,7 +479,7 @@ The lanes share one edge operation.\par}
 \smallsource{Each sample keeps its own state; inactive updates are masked. Larger batches also need more state.}
 \end{frame}
 
-\note{\small\textbf{Slide 8: 145 seconds; finish at 8:10.} Trace the highlighted column and row slowly. Both diagrams use vertex-major storage. Four lanes following different neighbors within one sample access separate rows. Holding an edge fixed and assigning samples to lanes gives adjacent state. These are logical accesses, not fixed transaction counts. Each sample keeps its own state and inactive updates are masked. Larger batches trade topology reuse against footprint and inactive work. Transition to the concrete update: undirected component labels, followed by reconstruction of the fixed sampled edges used in every pass.}
+\note{\small\textbf{Slide 8: 145 seconds; finish at 8:10.} Trace the highlighted column and row slowly. Both diagrams use vertex-major storage. Four lanes following different neighbors within one sample access separate rows. Holding an edge fixed and assigning samples to lanes gives adjacent state. These are logical accesses, not fixed transaction counts. Each sample keeps its own state and inactive updates are masked. Larger batches trade topology reuse against footprint and inactive work. Transition to reconstructing each sample's active edges, then using those edges in the undirected component-label update.}
 
 % MAIN 09 | 105 seconds | cumulative 9:55
 \begin{frame}{Component labels and reconstructed edges}
@@ -487,29 +487,6 @@ The lanes share one edge operation.\par}
 \textbf{Undirected graphs: a source reaches every vertex in its component.}\par
 \vspace{0.04cm}
 \begin{columns}[T,onlytextwidth]
-\column{0.48\textwidth}\setlength{\parskip}{0pt}
-\textbf{Component labels across samples}\par
-\vspace{0.06cm}
-{\small Initialize labels with vertex IDs: $\ell_r(v)=v$.\par}
-\vspace{0.04cm}
-\centering
-\begin{tikzpicture}[x=1cm,y=0.82cm,>=Latex,
- vertex/.style={circle,draw=Teal,fill=Teal!10,minimum size=0.62cm,inner sep=0pt,font=\normalsize}]
- \node[vertex] (one) at (0,0) {1};
- \node[vertex] (four) at (2.2,0) {4};
- \node[vertex] (three) at (4.4,0) {3};
- \draw[Teal,thick] (one)--(four)--(three);
- \draw[->,Steel,thick] (2.2,-0.43)--(2.2,-0.78);
- \node[font=\small,text=DeepNavy] at (2.2,-1.03)
-   {All three vertices converge to label 1.};
-\end{tikzpicture}\par
-\vspace{0.06cm}\raggedright
-{\small Update over active neighbors until convergence:\par}
-\vspace{0.03cm}
-{\centering $\displaystyle
- \ell_r(v)\leftarrow\min_{x\in\{v\}\,\cup\,N_{G_r}(v)}\ell_r(x)$\par}
-\vspace{0.06cm}
-{\small Each lane updates its own sample's label.\par}
 \column{0.48\textwidth}\setlength{\parskip}{0pt}
 \textbf{Reconstructing sampled edges}\par
 \vspace{0.06cm}
@@ -538,13 +515,36 @@ a symmetric edge hash $h(u,v)=h(v,u)$.\par}
 \end{tikzpicture}\par
 \vspace{0.04cm}
 {\small $\{u,v\}\in G_r\ \Longleftrightarrow\ X_r\oplus h(u,v)\leq T_{uv}$\par}
+\column{0.48\textwidth}\setlength{\parskip}{0pt}
+\textbf{Component labels across samples}\par
+\vspace{0.06cm}
+{\small Initialize labels with vertex IDs: $\ell_r(v)=v$.\par}
+\vspace{0.04cm}
+\centering
+\begin{tikzpicture}[x=1cm,y=0.82cm,>=Latex,
+ vertex/.style={circle,draw=Teal,fill=Teal!10,minimum size=0.62cm,inner sep=0pt,font=\normalsize}]
+ \node[vertex] (one) at (0,0) {1};
+ \node[vertex] (four) at (2.2,0) {4};
+ \node[vertex] (three) at (4.4,0) {3};
+ \draw[Teal,thick] (one)--(four)--(three);
+ \draw[->,Steel,thick] (2.2,-0.43)--(2.2,-0.78);
+ \node[font=\small,text=DeepNavy] at (2.2,-1.03)
+   {All three vertices converge to label 1.};
+\end{tikzpicture}\par
+\vspace{0.06cm}\raggedright
+{\small Update over active neighbors until convergence:\par}
+\vspace{0.03cm}
+{\centering $\displaystyle
+ \ell_r(v)\leftarrow\min_{x\in\{v\}\,\cup\,N_{G_r}(v)}\ell_r(x)$\par}
+\vspace{0.06cm}
+{\small Each lane updates its own sample's label.\par}
 \end{columns}
 \vspace{0.04cm}
 \takeaway{Every pass uses the same sampled edges, without storing each sampled graph.}
 \smallsource{Illustrative 4-bit values; $T_{uv}$ encodes the edge probability. Random seeds identify samples, not influence sources.\par
 Repeatability alone does not establish independent edge sampling.}
 \end{frame}
-\note{\small\textbf{Slide 9: 105 seconds; finish at 9:55.} Move explicitly from the directed running example to the undirected case. On the left, initialize vertex IDs and propagate the minimum over active neighbors until convergence; component 1--4--3 converges to label one. Each sample lane updates its own label. Label propagation is standard; the contribution is its organization across samples. Every pass must reuse the same edges. On the right, trace symmetric hash six and sample seeds five, four, fourteen, seven to XOR results three, two, eight, one. Threshold seven activates samples one, two, and four. Reusing keys recovers the same decisions across passes and directions; repeatability alone does not prove joint edge independence. Labels remain stored, while edge decisions are reconstructed inside propagation. Source: InFuseR-MG, Sections 3.1--3.3.}
+\note{\small\textbf{Slide 9: 105 seconds; finish at 9:55.} Move explicitly from the directed running example to the undirected case. On the left, trace symmetric hash six and sample seeds five, four, fourteen, seven to XOR results three, two, eight, one. Threshold seven activates samples one, two, and four. Reusing keys recovers the same decisions across passes and directions; repeatability alone does not prove joint edge independence. On the right, initialize vertex IDs and propagate the minimum over active neighbors until convergence; component 1--4--3 converges to label one. Each sample lane updates its own label using its reconstructed active edges. Label propagation is standard; the contribution is its organization across samples. Labels remain stored, while edge decisions are reconstructed inside propagation. Source: InFuseR-MG, Sections 3.1--3.3.}
 
 % Helpers for the research core; the opening slides retain their own layout.
 \newcommand{\researchcaption}[1]{\par\vspace{0.12cm}{\scriptsize\color{MidGray}#1\par}}
