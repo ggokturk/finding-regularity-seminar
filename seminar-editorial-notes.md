@@ -1,36 +1,23 @@
 # Faculty seminar editorial notes
 
-The deck has **25 main slides**, followed by a divider and **16 backup slides**: **42 static PDF pages**. The title is **Finding Regularity: High-Performance Computing for Graph Algorithms**.
+The deck has **25 main slides**, followed by a divider and **14 backup slides**: **40 static PDF pages**. The title is **Finding Regularity: High-Performance Computing for Graph Algorithms**.
 
-Prepared narration totals **30:20**. Reserve **35 minutes** for delivery with pauses and brief interruptions, with **40 minutes as the ceiling** in the one-hour seminar and interview session. This leaves roughly 20–25 minutes for discussion and interview questions. Timings are rehearsal targets, not measured delivery times.
+Prepared narration totals **30:50**. Reserve **35 minutes** for delivery with pauses and brief interruptions, with **40 minutes as the ceiling** in the one-hour seminar and interview session. This leaves roughly 20–25 minutes for discussion and interview questions. Timings are rehearsal targets, not measured delivery times.
 
-## Opening revision for an ML faculty audience
+## Opening revision for a CS faculty audience
 
-The opening now follows a continuous argument: irregular memory access limits useful parallelism; shared topology creates a sample dimension to organize; adjacent sample state improves the access pattern; reconstructing the same edge decisions avoids materialized sampled graphs; the fused-sampling result supplies the payoff.
+Slide 9 combines the original **Component labels across samples** and **Reconstructing sampled edges** slides directly. The left column retains the 1--4--3 component, minimum-label propagation equation, and per-sample lane interpretation. The right column retains the stored seeds 5, 4, 14, 7; XOR with edge hash 6; results 3, 2, 8, 1; threshold 7; and the edge-membership equation.
 
-The former slides 9 and 10 are replaced by one main slide, **The same sampled edges on every pass**. Its left side explains the retained sample key and edge hash; its right side shows the same active mask for edge 1 to 4 on successive passes. Evolving vertex state and fixed graph membership are distinguished before discussing the memory saving. The component-label and numerical XOR examples are preserved as the first two backup slides.
+The narration explains the label update first, then uses its need for fixed sampled edges to introduce reconstruction. It explicitly changes from the earlier directed running example to the undirected component algorithm. This preserves the original technical concepts for a CS faculty audience and connects directly to **Compute more, move less** on slide 10.
 
-This avoids switching the main explanation from directed reachability to an undirected component algorithm before the payoff. The undirected component-label implementation is introduced briefly as an example of exact state on slide 11, with its full update available in backup. The merged slide illustrates repeatability; it does not claim that repeatability establishes the required joint sampling distribution.
+The merged slide retains the original two slides' combined **1:45** explanation time. The separate copies added to backup in the previous revision have been removed. The existing implementation backup retains the detailed hash definition. All later cumulative timings are adjusted by 30 seconds; the prepared talk now totals 30:50.
 
-| Slides | Editorial decision | Delivery purpose |
-|---|---|---|
-| 1–2 | Keep title and background brief | Establish research identity within the first minute |
-| 3 | Shorten the HPC overview to 30 seconds | Preview the arithmetic versus data-movement tradeoff |
-| 4 | Keep the lane diagram and trace only selected lanes | Establish memory stalls and unequal useful work |
-| 5 | Add a spoken connection to current graph-learning work | Explain the relevance to the faculty audience early |
-| 6 | Explain one sample, then point to all four counts and their average | Establish repeated stochastic graph traversal without an edge-by-edge tour |
-| 7–8 | Retain shared topology and the column/row access comparison | Make the presenter's execution decision concrete |
-| 9 | Combine repeated propagation and reconstructed edge membership | Connect sample lanes directly to the avoided sampled-graph storage |
-| 10 | Keep the fused-sampling pipeline and scoped result | Reach the first quantitative payoff at 10:40 |
-| 11 | Briefly define component labels as an example of retained state | Connect memory savings to the remaining state bottleneck |
-| 12–25 | Renumber and update all cumulative timings | Preserve the remainder of the research narrative |
-
-The main narration, timing table, source comments, and embedded speaker cues use the same numbering and time allocations. Slides remain static.
+The shorter HPC introduction and early spoken graph-learning connection remain. The influence-maximization script traces one sample and then its Monte Carlo average. Slides, source comments, embedded cues, and the narrative timing table are synchronized. Every slide is static.
 
 ## Technical boundaries retained
 
-- Main slide 9 follows the directed running example only to illustrate repeated edge membership. The backup component-label algorithm applies to undirected graphs, where component sizes support influence estimates; several seeds count each component once.
-- The backup XOR construction uses a symmetric hash for undirected edges. Reusing keys establishes repeatability across passes and directions, not joint edge independence.
+- Main slide 9 explicitly treats undirected graphs. The minimum-label update identifies connected components; it is not a directed reachability algorithm.
+- The main-slide XOR construction uses a symmetric hash for undirected edges. Reusing keys establishes repeatability across passes and directions, not joint edge independence.
 - The fused-sampling comparison supports on-demand sampling. Samples execute separately in that comparison; it does not isolate the sample-lane transformation.
 - Compact registers still occupy a vertex-by-sample structure. They change entry size, operations, and approximation rather than removing that structure's dimensions.
 - A sketch register is a rare-pattern statistic, not an exact cardinality. Monte Carlo evaluation and error-adaptive rebuilding remain part of HyperFuseR.
@@ -59,15 +46,15 @@ Only source material needed to explain the algorithms was consulted. These proje
 ## Rehearsal priorities
 
 - **Slide 8, ending at 8:10:** slowly trace the scattered column and adjacent row. Keep the distinction between logical state accesses and physical memory transactions.
-- **Slide 9, ending at 9:25:** distinguish changing vertex state from fixed edge decisions; trace only edge 1 to 4. Keep the component update and XOR arithmetic for questions.
-- **Slide 10, ending at 10:40:** identify the stored graph write/read that fusion removes, then state the result and its sequential comparison scope.
-- **Slide 12, ending at 13:35:** distinguish a register value from a count, then trace the inactive lane through the merge.
-- **Slide 14, ending at 16:15:** follow one sample identity across assignments. Explain why skipping a warp differs from removing a sample's contribution.
-- **Slides 17–18, ending at 22:15:** demonstrate locality opportunity, then explain conditional residual uniformity.
-- **Slide 19, ending at 23:15:** state the historical measurement scope once.
-- **Slide 24, ending at 29:50:** present the scheduling hypothesis as proposed work, with tuned baselines, unseen workloads, total cost, and fixed accuracy as evaluation criteria.
+- **Slide 9, ending at 9:55:** explain the component update on the left, then trace the XOR calculation on the right. Connect repeated propagation passes to the need for repeatable edge decisions.
+- **Slide 10, ending at 11:10:** identify the stored graph write/read that fusion removes, then state the result and its sequential comparison scope.
+- **Slide 12, ending at 14:05:** distinguish a register value from a count, then trace the inactive lane through the merge.
+- **Slide 14, ending at 16:45:** follow one sample identity across assignments. Explain why skipping a warp differs from removing a sample's contribution.
+- **Slides 17–18, ending at 22:45:** demonstrate locality opportunity, then explain conditional residual uniformity.
+- **Slide 19, ending at 23:45:** state the historical measurement scope once.
+- **Slide 24, ending at 30:20:** present the scheduling hypothesis as proposed work, with tuned baselines, unseen workloads, total cost, and fixed accuracy as evaluation criteria.
 
-The 35-minute delivery slot includes about four and a half minutes beyond the prepared narration. Rehearse aloud with pointing and pauses. If discussion runs long, shorten synthesis and current-project detail while preserving time to explain the independent research agenda.
+The 35-minute delivery slot includes about four minutes beyond the prepared narration. Rehearse aloud with pointing and pauses. If discussion runs long, shorten synthesis and current-project detail while preserving time to explain the independent research agenda.
 
 ## Build and verification
 

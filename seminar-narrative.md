@@ -1,8 +1,8 @@
 # Seminar speaker narrative
 
-Prepared delivery: **30:20** across 25 main slides. Reserve **35 minutes** for delivery with pauses and brief interruptions, with **40 minutes as the ceiling**, within the one-hour seminar and interview session. This leaves roughly 20–25 minutes for discussion and interview questions. Rehearse aloud; the per-slide timings are planning targets.
+Prepared delivery: **30:50** across 25 main slides. Reserve **35 minutes** for delivery with pauses and brief interruptions, with **40 minutes as the ceiling**, within the one-hour seminar and interview session. This leaves roughly 20–25 minutes for discussion and interview questions. Rehearse aloud; the per-slide timings are planning targets.
 
-Use first person for your intellectual decisions and “we” for joint results. Give the opening a clear connection to graph learning, then let the execution examples establish the contribution. The component-label and numerical XOR examples are in backup. The SABA performance scope is stated once in the main narrative. Current projects are distinguished from completed work, and the preliminary NeuralBloom compute result is not a full-training speedup.
+Use first person for your intellectual decisions and “we” for joint results. Give the opening a clear connection to graph learning, then let the execution examples establish the contribution. Slide 9 combines the component-label update and numerical XOR reconstruction from the original two slides. The SABA performance scope is stated once in the main narrative. Current projects are distinguished from completed work, and the preliminary NeuralBloom compute result is not a full-training speedup.
 
 | Slide | Topic | Time | Cumulative |
 |---|---|---:|---:|
@@ -14,23 +14,23 @@ Use first person for your intellectual decisions and “we” for joint results.
 | 6 | Influence maximization | 1:10 | 4:45 |
 | 7 | The hidden regular dimension | 1:00 | 5:45 |
 | 8 | Reorganizing execution | 2:25 | 8:10 |
-| 9 | The same sampled edges on every pass | 1:15 | 9:25 |
-| 10 | Compute more, move less | 1:15 | 10:40 |
-| 11 | State becomes expensive | 0:45 | 11:25 |
-| 12 | Compact mergeable state | 2:10 | 13:35 |
-| 13 | CPU, GPU, and distributed mappings | 1:00 | 14:35 |
-| 14 | Sample-space scheduling | 1:40 | 16:15 |
-| 15 | Distributed evidence | 1:00 | 17:15 |
-| 16 | Random walks break alignment | 1:15 | 18:30 |
-| 17 | Bouquet arrangement | 2:15 | 20:45 |
-| 18 | The corrected sampler | 1:30 | 22:15 |
-| 19 | Cache behavior and evidence scope | 1:00 | 23:15 |
-| 20 | A coherent methodology | 0:50 | 24:05 |
-| 21 | Limits and cost models | 0:40 | 24:45 |
-| 22 | Ongoing work in graph learning | 1:25 | 26:10 |
-| 23 | Reconstruction and trajectory execution | 1:45 | 27:55 |
-| 24 | An adaptive-scheduling project | 1:55 | 29:50 |
-| 25 | Closing | 0:30 | 30:20 |
+| 9 | Component labels and reconstructed edges | 1:45 | 9:55 |
+| 10 | Compute more, move less | 1:15 | 11:10 |
+| 11 | State becomes expensive | 0:45 | 11:55 |
+| 12 | Compact mergeable state | 2:10 | 14:05 |
+| 13 | CPU, GPU, and distributed mappings | 1:00 | 15:05 |
+| 14 | Sample-space scheduling | 1:40 | 16:45 |
+| 15 | Distributed evidence | 1:00 | 17:45 |
+| 16 | Random walks break alignment | 1:15 | 19:00 |
+| 17 | Bouquet arrangement | 2:15 | 21:15 |
+| 18 | The corrected sampler | 1:30 | 22:45 |
+| 19 | Cache behavior and evidence scope | 1:00 | 23:45 |
+| 20 | A coherent methodology | 0:50 | 24:35 |
+| 21 | Limits and cost models | 0:40 | 25:15 |
+| 22 | Ongoing work in graph learning | 1:25 | 26:40 |
+| 23 | Reconstruction and trajectory execution | 1:45 | 28:25 |
+| 24 | An adaptive-scheduling project | 1:55 | 30:20 |
+| 25 | Closing | 0:30 | 30:50 |
 
 ## 1. Opening — 0:20
 
@@ -98,19 +98,25 @@ We still have to perform the required edge–sample work. The change is which up
 
 Larger batches can reuse more topology, but they also increase the state footprint and may include more inactive work. The useful batch size depends on the workload and memory hierarchy.
 
-We have changed how work is grouped. As propagation continues, each sample must keep using the same active edges. How can we recover those decisions without storing every sampled graph?
+We have changed how work is grouped. Let me now make the update performed by each sample lane concrete, and show how we recover its sampled edges.
 
-## 9. The same sampled edges on every pass — 1:15
+## 9. Component labels and reconstructed edges — 1:45
 
-Each lane keeps its own vertex state, which changes as reachability propagates. The graph sample itself must remain the same throughout that computation. Drawing new edges at every pass would change the problem.
+The earlier example used directed edges. Now consider undirected graphs, where a source reaches every vertex in its connected component.
 
-I retain one random key per sample and a hash for each original edge. At an edge visit, the edge hash, sample key, and edge probability let us reconstruct its active decision. The key identifies the simulation; it is separate from the starting vertex whose influence we are estimating.
+On the left, initialize each vertex label with its ID. Repeatedly take the smallest label among that vertex and its active neighbors. Vertices one, four, and three converge to label one.
 
-Follow edge one to four again. It is active in samples one, two, and four. On a later pass, the same inputs recover those same decisions, even though the vertex states may have changed.
+This is the update for the lanes on the previous slide: each lane maintains a label for a different sample and masks inactive edges. Label propagation is standard; my contribution is organizing it across samples.
 
-This explains repeatability. The sampling distribution needs its own justification; repeatability alone does not prove independent edge sampling.
+Every pass must use the same sampled edges. The right side shows how we recover those decisions without storing every sampled graph.
 
-We still store the evolving vertex state, but avoid storing a separate graph for every sample. What does that save?
+Store one random seed per sample and a symmetric hash per edge. The random seed identifies the sample; it is distinct from the influence source.
+
+For edge one–four, XOR hash six with the four seeds. The results are three, two, eight, and one. Threshold seven activates samples one, two, and four.
+
+Reusing these inputs recovers the same decision on every pass and in both directions. That establishes repeatability; independent edge sampling requires separate justification.
+
+I fuse this reconstruction with propagation across samples. Labels remain in memory, but sampled graphs need not be stored. What does that tradeoff save?
 
 ## 10. Compute more, move less — 1:15
 
@@ -124,7 +130,7 @@ We can then combine reconstruction with sample batching. But sharing topology do
 
 ## 11. State becomes expensive — 0:45
 
-This is the same kind of matrix we saw earlier. Every vertex still has separate state for every sample. For example, the undirected implementation stores a component label for each vertex in each sample. That already gives us vertices times samples entries, which traversal reads and updates.
+This is the same kind of matrix we saw earlier. Every vertex still has separate state for every sample. The component labels we just saw give us vertices times samples entries, which traversal reads and updates.
 
 Return to sample one: the reached vertices were one, two, and four. Their contribution to the influence estimate is the count, three. That suggests a different question: can smaller state support the quantity we actually need?
 

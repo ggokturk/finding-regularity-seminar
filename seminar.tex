@@ -479,45 +479,72 @@ The lanes share one edge operation.\par}
 \smallsource{Each sample keeps its own state; inactive updates are masked. Larger batches also need more state.}
 \end{frame}
 
-\note{\small\textbf{Slide 8: 145 seconds; finish at 8:10.} Trace the highlighted column and row slowly. Both diagrams use vertex-major storage. Four lanes following different neighbors within one sample access separate rows. Holding an edge fixed and assigning samples to lanes gives adjacent state. These are logical accesses, not fixed transaction counts. Each sample keeps its own state and inactive updates are masked. Larger batches trade topology reuse against footprint and inactive work. Transition: the same sample must use the same edge decisions on every propagation pass; how can we recover them without storing every sampled graph.}
+\note{\small\textbf{Slide 8: 145 seconds; finish at 8:10.} Trace the highlighted column and row slowly. Both diagrams use vertex-major storage. Four lanes following different neighbors within one sample access separate rows. Holding an edge fixed and assigning samples to lanes gives adjacent state. These are logical accesses, not fixed transaction counts. Each sample keeps its own state and inactive updates are masked. Larger batches trade topology reuse against footprint and inactive work. Transition to the concrete update: undirected component labels, followed by reconstruction of the fixed sampled edges used in every pass.}
 
-% MAIN 09 | 75 seconds | cumulative 9:25
-\begin{frame}{The same sampled edges on every pass}
+% MAIN 09 | 105 seconds | cumulative 9:55
+\begin{frame}{Component labels and reconstructed edges}
 \setlength{\parskip}{0pt}
-\textbf{Each sample's vertex state evolves; its edge decisions must stay fixed.}\par
-\vspace{0.20cm}
+\textbf{Undirected graphs: a source reaches every vertex in its component.}\par
+\vspace{0.04cm}
 \begin{columns}[T,onlytextwidth]
-\column{0.45\textwidth}\setlength{\parskip}{0pt}
-\textbf{Keep a compact description}\par
-\vspace{0.20cm}
-One random key per sample.\par
-One hash per original edge.\par
-\vspace{0.20cm}
-Use these with the edge probability\par
-to reconstruct membership.\par
-\vspace{0.20cm}
-Active edge: update the lane's state.\par
-Inactive edge: skip the update.\par
-\column{0.51\textwidth}\setlength{\parskip}{0pt}
-\textbf{One edge, four sample decisions}\par
-\vspace{0.20cm}
-Edge $1\to4$ in the running example:\par
-\vspace{0.20cm}
-{\small\renewcommand{\arraystretch}{1.3}
-\begin{tabular}{@{}lcccc@{}}
-\toprule
-Sample & 1 & 2 & 3 & 4\\\midrule
-First pass & \textcolor{Teal}{on} & \textcolor{Teal}{on} & off & \textcolor{Teal}{on}\\
-Later pass & \textcolor{Teal}{on} & \textcolor{Teal}{on} & off & \textcolor{Teal}{on}\\\bottomrule
-\end{tabular}\par}
-\vspace{0.25cm}
-Same inputs, same active samples.\par
+\column{0.48\textwidth}\setlength{\parskip}{0pt}
+\textbf{Component labels across samples}\par
+\vspace{0.06cm}
+{\small Initialize labels with vertex IDs: $\ell_r(v)=v$.\par}
+\vspace{0.04cm}
+\centering
+\begin{tikzpicture}[x=1cm,y=0.82cm,>=Latex,
+ vertex/.style={circle,draw=Teal,fill=Teal!10,minimum size=0.62cm,inner sep=0pt,font=\normalsize}]
+ \node[vertex] (one) at (0,0) {1};
+ \node[vertex] (four) at (2.2,0) {4};
+ \node[vertex] (three) at (4.4,0) {3};
+ \draw[Teal,thick] (one)--(four)--(three);
+ \draw[->,Steel,thick] (2.2,-0.43)--(2.2,-0.78);
+ \node[font=\small,text=DeepNavy] at (2.2,-1.03)
+   {All three vertices converge to label 1.};
+\end{tikzpicture}\par
+\vspace{0.06cm}\raggedright
+{\small Update over active neighbors until convergence:\par}
+\vspace{0.03cm}
+{\centering $\displaystyle
+ \ell_r(v)\leftarrow\min_{x\in\{v\}\,\cup\,N_{G_r}(v)}\ell_r(x)$\par}
+\vspace{0.06cm}
+{\small Each lane updates its own sample's label.\par}
+\column{0.48\textwidth}\setlength{\parskip}{0pt}
+\textbf{Reconstructing sampled edges}\par
+\vspace{0.06cm}
+{\small Store a random seed $X_r$ per sample and\par
+a symmetric edge hash $h(u,v)=h(v,u)$.\par}
+\vspace{0.07cm}
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm,every node/.style={font=\small},
+ cell/.style={draw=LightGray,fill=Mist,minimum width=0.69cm,minimum height=0.46cm,inner sep=0pt}]
+ \foreach \i in {1,...,4}{
+   \node[text=MidGray] at ({2.7+0.85*(\i-1)},0) {$r=\i$};
+ }
+ \node[anchor=west] at (0,-0.57) {Stored seeds $X_r$};
+ \foreach \i/\x in {1/5,2/4,3/14,4/7}{
+   \node[cell] at ({2.7+0.85*(\i-1)},-0.57) {\x};
+ }
+ \node[anchor=west] at (0,-1.18) {XOR $h(1,4)=6$};
+ \foreach \i/\x in {1/3,2/2,3/8,4/1}{
+   \node[cell] at ({2.7+0.85*(\i-1)},-1.18) {\x};
+ }
+ \node[anchor=west] at (0,-1.79) {Active?\ ($\leq7$)};
+ \foreach \i in {1,2,4}{
+   \node[cell,fill=Teal!12,draw=Teal,text=Teal!80!black] at ({2.7+0.85*(\i-1)},-1.79) {yes};
+ }
+ \node[cell,text=MidGray] at (4.4,-1.79) {no};
+\end{tikzpicture}\par
+\vspace{0.04cm}
+{\small $\{u,v\}\in G_r\ \Longleftrightarrow\ X_r\oplus h(u,v)\leq T_{uv}$\par}
 \end{columns}
-\vspace{0.20cm}
-\takeaway{Recover edge decisions inside the traversal; avoid storing each sampled graph.}
-\smallsource{Random keys identify samples, not influence sources. Repeatability alone does not establish independent edge sampling.}
+\vspace{0.04cm}
+\takeaway{Every pass uses the same sampled edges, without storing each sampled graph.}
+\smallsource{Illustrative 4-bit values; $T_{uv}$ encodes the edge probability. Random seeds identify samples, not influence sources.\par
+Repeatability alone does not establish independent edge sampling.}
 \end{frame}
-\note{\small\textbf{Slide 9: 75 seconds; finish at 9:25.} Connect directly to the sample lanes: vertex state evolves across propagation passes, but edge decisions must stay fixed. Retain one random key per sample and a hash per original edge; reconstruct membership at each visit. Trace only edge 1 to 4 and its active samples 1, 2, and 4 on both passes. The directed running example illustrates repeated membership; the undirected component-label implementation and symmetric XOR construction are in backup. Repeatability is distinct from independent edge sampling. End with the avoided sampled-graph storage and transition to its measured payoff. Source: InFuseR-MG, Sections 3.1--3.3.}
+\note{\small\textbf{Slide 9: 105 seconds; finish at 9:55.} Move explicitly from the directed running example to the undirected case. On the left, initialize vertex IDs and propagate the minimum over active neighbors until convergence; component 1--4--3 converges to label one. Each sample lane updates its own label. Label propagation is standard; the contribution is its organization across samples. Every pass must reuse the same edges. On the right, trace symmetric hash six and sample seeds five, four, fourteen, seven to XOR results three, two, eight, one. Threshold seven activates samples one, two, and four. Reusing keys recovers the same decisions across passes and directions; repeatability alone does not prove joint edge independence. Labels remain stored, while edge decisions are reconstructed inside propagation. Source: InFuseR-MG, Sections 3.1--3.3.}
 
 % Helpers for the research core; the opening slides retain their own layout.
 \newcommand{\researchcaption}[1]{\par\vspace{0.12cm}{\scriptsize\color{MidGray}#1\par}}
@@ -526,7 +553,7 @@ Same inputs, same active samples.\par
 researchcell/.style={draw=LightGray,fill=Mist,minimum width=0.72cm,minimum height=0.48cm,inner sep=0pt,font=\small},
 researchvertex/.style={circle,draw=MidGray,fill=white,minimum size=0.42cm,inner sep=0pt,font=\small}}
 
-% MAIN 10 | 75 seconds | cumulative 10:40
+% MAIN 10 | 75 seconds | cumulative 11:10
 \begin{frame}{Compute more, move less}
 \setlength{\parskip}{0pt}
 \textbf{Sampling can happen inside the traversal.}\par
@@ -563,9 +590,9 @@ from fused sampling\par
 \researchpoint{Cheap arithmetic can remove a more expensive memory operation.}
 \researchcaption{Three graphs where the reference completed, $K=50$. Samples run separately in this comparison; sample batching is an additional change.}
 \end{frame}
-\note{\small\textbf{Slide 10: 75 seconds; finish at 10:40.} Trace the stored-sample pipeline and the three fused steps: read topology, reconstruct the edge decision, and traverse immediately. These are operations within the same traversal, with no materialized sampled graph between them. This isolates on-the-fly sampling, not the sample-lane transpose. State the reported 3--21 times comparison once, then turn to the remaining per-sample state. Source: InFuseR-MG, Table 4.}
+\note{\small\textbf{Slide 10: 75 seconds; finish at 11:10.} Trace the stored-sample pipeline and the three fused steps: read topology, reconstruct the edge decision, and traverse immediately. These are operations within the same traversal, with no materialized sampled graph between them. This isolates on-the-fly sampling, not the sample-lane transpose. State the reported 3--21 times comparison once, then turn to the remaining per-sample state. Source: InFuseR-MG, Table 4.}
 
-% MAIN 11 | 45 seconds | cumulative 11:25
+% MAIN 11 | 45 seconds | cumulative 11:55
 \begin{frame}{The next bottleneck: per-sample state}
 \setlength{\parskip}{0pt}
 Sharing the graph still leaves a state entry for every vertex and sample.\par
@@ -598,9 +625,9 @@ Sample 1 from our running example:\par
 \researchpoint{The next change is the representation of each entry in that matrix.}
 \researchcaption{Compact summaries still need sample-aligned state. They introduce estimation error rather than eliminate the sample dimension.}
 \end{frame}
-\note{\small\textbf{Slide 11: 45 seconds; finish at 11:25.} Point back to the matrix on slide 8. Sharing topology leaves vertex-times-sample state. Introduce exact component labels as the undirected implementation's example of per-vertex state; its detailed update is in backup. The count three is what enters the influence estimate. Ask whether smaller state can support that query. Sketching changes representation and approximation, not automatically the asymptotic matrix dimensions.}
+\note{\small\textbf{Slide 11: 45 seconds; finish at 11:55.} Point back to the matrix on slide 8. Sharing topology leaves vertex-times-sample state. Recall the exact component labels just introduced on slide 9. The count three is what enters the influence estimate. Ask whether smaller state can support that query. Sketching changes representation and approximation, not automatically the asymptotic matrix dimensions.}
 
-% MAIN 12 | 130 seconds | cumulative 13:35
+% MAIN 12 | 130 seconds | cumulative 14:05
 \begin{frame}{Compact representations, uniform updates}
 \setlength{\parskip}{0pt}
 \textbf{HyperFuseR: estimate reach using compact, mergeable registers.}\par
@@ -644,9 +671,9 @@ Inactive edge: keep $M_u[r]$.\par}
 \researchpoint{Compact registers turn propagation into masked vector maximums.}
 \researchcaption{Register values are illustrative. The method monitors estimation error and rebuilds summaries when needed.}
 \end{frame}
-\note{\small\textbf{Slide 12: 130 seconds; finish at 13:35.} Explain rare patterns, not a claim that the register itself is a count. Trace the masked merge: sample 2 remains one although its neighbor has three. Repeated paths cannot increase a register merely by repeating a vertex. Each register belongs to a stochastic sample. Compact state and uniform maximum operations fit the machine, at the cost of sketch error and rebuilding. Source: HyperFuseR, Sections 2.2--3.}
+\note{\small\textbf{Slide 12: 130 seconds; finish at 14:05.} Explain rare patterns, not a claim that the register itself is a count. Trace the masked merge: sample 2 remains one although its neighbor has three. Repeated paths cannot increase a register merely by repeating a vertex. Each register belongs to a stochastic sample. Compact state and uniform maximum operations fit the machine, at the cost of sketch error and rebuilding. Source: HyperFuseR, Sections 2.2--3.}
 
-% MAIN 13 | 60 seconds | cumulative 14:35
+% MAIN 13 | 60 seconds | cumulative 15:05
 \begin{frame}{Mapping the sample dimension to hardware}
 \setlength{\parskip}{0pt}
 \textbf{The work unit is still one edge across several samples.}\par
@@ -674,9 +701,9 @@ Inactive edge: keep $M_u[r]$.\par}
 \textbf{Across devices:} propagate locally, then combine sketch statistics for source selection.\par
 \researchcaption{Eight sample entries shown schematically. Vector widths, warp widths, and device partition sizes differ.}
 \end{frame}
-\note{\small\textbf{Slide 13: 60 seconds; finish at 14:35.} Follow the same sample entries through three mappings. These are alternatives and levels of decomposition, not stages in a pipeline. State is local to the device's sample partition; graph edges can overlap between devices. Combining sketch statistics still requires communication. Sources: InFuseR-MG, HyperFuseR, DiFuseR.}
+\note{\small\textbf{Slide 13: 60 seconds; finish at 15:05.} Follow the same sample entries through three mappings. These are alternatives and levels of decomposition, not stages in a pipeline. State is local to the device's sample partition; graph edges can overlap between devices. Combining sketch statistics still requires communication. Sources: InFuseR-MG, HyperFuseR, DiFuseR.}
 
-% MAIN 14 | 100 seconds | cumulative 16:15
+% MAIN 14 | 100 seconds | cumulative 16:45
 \begin{frame}{FASST: sample order changes hardware utilization}
 \setlength{\parskip}{0pt}
 \textbf{For this edge, samples 2, 4, 6, and 8 are active.}\par
@@ -708,9 +735,9 @@ The same sample set gives the same aggregate estimate.\par
 \researchpoint{Grouping inactive samples can remove an entire warp's update work.}
 \researchcaption{Colored cells are active. Four-lane toy warps illustrate one edge; sorting keys does not guarantee this grouping for every edge.}
 \end{frame}
-\note{\small\textbf{Slide 14: 100 seconds; finish at 16:15.} Track sample IDs, not only colors. Both sides contain the same eight samples and the same four active decisions. Sorting the keys is a single global assignment, not per-edge sorting of outcomes. FASST exploits structure in the actual fused decision construction; an arbitrary hash need not preserve useful key neighborhoods. Whole-warp early exits and device-local edge filtering follow. Source: DiFuseR, Section 4.1.}
+\note{\small\textbf{Slide 14: 100 seconds; finish at 16:45.} Track sample IDs, not only colors. Both sides contain the same eight samples and the same four active decisions. Sorting the keys is a single global assignment, not per-edge sorting of outcomes. FASST exploits structure in the actual fused decision construction; an arbitrary hash need not preserve useful key neighborhoods. Whole-warp early exits and device-local edge filtering follow. Source: DiFuseR, Section 4.1.}
 
-% MAIN 15 | 60 seconds | cumulative 17:15
+% MAIN 15 | 60 seconds | cumulative 17:45
 \begin{frame}{Sample-space decomposition scales across GPUs}
 \setlength{\parskip}{0pt}
 \begin{columns}[T,onlytextwidth]
@@ -738,9 +765,9 @@ The same sample set gives the same aggregate estimate.\par
 \researchpoint{Partition samples so traversal stays local; communicate at global decisions.}
 \researchcaption{Geometric means, $K=50$, $J=1024$; two GPUs per node for multi-GPU runs. Friendster excluded because the one-GPU configuration does not fit.}
 \end{frame}
-\note{\small\textbf{Slide 15: 60 seconds; finish at 17:15.} Emphasize 5.64 times on eight GPUs, then explain the local/global split. Edge overlap, balance, and reductions limit scaling. A superlinear point can reflect changed local graph work and footprint; do not attribute it solely to more arithmetic units. Source: DiFuseR, Table 8.}
+\note{\small\textbf{Slide 15: 60 seconds; finish at 17:45.} Emphasize 5.64 times on eight GPUs, then explain the local/global split. Edge overlap, balance, and reductions limit scaling. A superlinear point can reflect changed local graph work and footprint; do not attribute it solely to more arithmetic units. Source: DiFuseR, Table 8.}
 
-% MAIN 16 | 75 seconds | cumulative 18:30
+% MAIN 16 | 75 seconds | cumulative 19:00
 \begin{frame}{A harder case: random walks destroy exact alignment}
 \setlength{\parskip}{0pt}
 \textbf{Every next adjacency address depends on the previous choice.}\par
@@ -774,9 +801,9 @@ The same sample set gives the same aggregate estimate.\par
 \researchpoint{Can we group walks that are likely to request the same adjacency data?}
 \researchcaption{Illustrative paths. Walks have independent state, but each individual path is a chain of dependent memory accesses.}
 \end{frame}
-\note{\small\textbf{Slide 16: 75 seconds; finish at 18:30.} Read the matrix one row at a time: one shared adjacency row, then three, then four. This counts requested vertex rows, not cache misses. The fixed-edge alignment used earlier cannot persist automatically. Parallel walks expose independent work; scheduling must recover locality where it exists.}
+\note{\small\textbf{Slide 16: 75 seconds; finish at 19:00.} Read the matrix one row at a time: one shared adjacency row, then three, then four. This counts requested vertex rows, not cache misses. The fixed-edge alignment used earlier cannot persist automatically. Parallel walks expose independent work; scheduling must recover locality where it exists.}
 
-% MAIN 17 | 135 seconds | cumulative 20:45
+% MAIN 17 | 135 seconds | cumulative 21:15
 \begin{frame}{SABA: seed ordering creates opportunities for reuse}
 \setlength{\parskip}{0pt}
 \textbf{Same source, same eight random keys, different groups of four.}\par
@@ -819,9 +846,9 @@ The same sample set gives the same aggregate estimate.\par
 \researchpoint{Nearby keys can share early adjacency reads; each walk keeps its own residual state.}
 \researchcaption{A bouquet is a batch of walks processed together. Toy keys are normalized independent draws. Later steps can diverge.}
 \end{frame}
-\note{\small\textbf{Slide 17: 135 seconds; finish at 20:45.} Trace the first group D,A,C,B and its four adjacency requests. Sorting the same keys yields A,A,B,B and C,C,D,D. This is a locality opportunity, not a fixed cache-line or speedup claim. Define bouquet. Close with the question of how a seed can guide several valid steps without reusing randomness already revealed by the path.}
+\note{\small\textbf{Slide 17: 135 seconds; finish at 21:15.} Trace the first group D,A,C,B and its four adjacency requests. Sorting the same keys yields A,A,B,B and C,C,D,D. This is a locality opportunity, not a fixed cache-line or speedup claim. Define bouquet. Close with the question of how a seed can guide several valid steps without reusing randomness already revealed by the path.}
 
-% MAIN 18 | 90 seconds | cumulative 22:15
+% MAIN 18 | 90 seconds | cumulative 22:45
 \begin{frame}{Correct sampling and useful grouping}
 \setlength{\parskip}{0pt}
 \textbf{The next neighbor must be uniform, even after observing the path so far.}\par
@@ -854,9 +881,9 @@ Every chosen neighbor leaves the same uniform residual range $\{0,1,2,3\}$.\par
 \researchpoint{Use the interval to choose a neighbor; keep only the unused position inside it.}
 \researchcaption{If the range is exhausted or the input lies outside the equal-sized buckets, switch permanently to fresh unbiased sampling. Assumes independent uniform inputs; full rule in backup.}
 \end{frame}
-\note{\small\textbf{Slide 18: 90 seconds; finish at 22:15.} Trace x=7. The choice reveals the interval, but each residual 0,1,2,3 is still equally likely within it. This conditional invariant supports the next step. General nondivisible ranges use the permanent unbiased fallback, not a fixed-seed XOR argument. Validity concerns labeled walks, not a walk conditioned on its sorted rank. Source: revised SABA, Section 3.2; full proof in backup.}
+\note{\small\textbf{Slide 18: 90 seconds; finish at 22:45.} Trace x=7. The choice reveals the interval, but each residual 0,1,2,3 is still equally likely within it. This conditional invariant supports the next step. General nondivisible ranges use the permanent unbiased fallback, not a fixed-seed XOR argument. Validity concerns labeled walks, not a walk conditioned on its sorted rank. Source: revised SABA, Section 3.2; full proof in backup.}
 
-% MAIN 19 | 60 seconds | cumulative 23:15
+% MAIN 19 | 60 seconds | cumulative 23:45
 \begin{frame}{Parallelism without locality can increase cache misses}
 \setlength{\parskip}{0pt}
 \textbf{Last-level cache misses, normalized to scalar walks = 100.}\par
@@ -883,9 +910,9 @@ Faster walk processing\par
 \researchpoint{Scheduling changes which data the parallel lanes request together.}
 \researchcaption{Reported earlier sampler implementation, not measurements of the corrected residual sampler. Geometric means over 10 graphs; 16,384 walks/vertex, Broadwell Xeons. Runtime comparison: 16 threads.}
 \end{frame}
-\note{\small\textbf{Slide 19: 60 seconds; finish at 23:15.} The orange bar revisits the opening claim: vector execution can worsen memory behavior. The HASH-to-SABA comparison shows the reported ordering benefit. State the historical measurement scope once. Do not claim these measurements establish performance of the corrected residual construction. Source: SABA Tables 5 and 7.}
+\note{\small\textbf{Slide 19: 60 seconds; finish at 23:45.} The orange bar revisits the opening claim: vector execution can worsen memory behavior. The HASH-to-SABA comparison shows the reported ordering benefit. State the historical measurement scope once. Do not claim these measurements establish performance of the corrected residual construction. Source: SABA Tables 5 and 7.}
 
-% MAIN 20 | 50 seconds | cumulative 24:05
+% MAIN 20 | 50 seconds | cumulative 24:35
 \begin{frame}{A methodology for irregular computation}
 \setlength{\parskip}{0pt}
 \textbf{Each project changes the work responsible for a specific machine cost.}\par
@@ -900,9 +927,9 @@ Unrelated walk addresses & Arrange trajectories using sampling structure & More 
 \end{tabular}\par}
 \researchpoint{Change execution order, representation, or the sampling construction.}
 \end{frame}
-\note{\small\textbf{Slide 20: 50 seconds; finish at 24:05.} Summarize the decisions, not a list of papers. Each row connects a cost, a permissible algorithmic change, and a hardware consequence. Exactness, approximation, and stochastic validity remain distinct requirements.}
+\note{\small\textbf{Slide 20: 50 seconds; finish at 24:35.} Summarize the decisions, not a list of papers. Each row connects a cost, a permissible algorithmic change, and a hardware consequence. Exactness, approximation, and stochastic validity remain distinct requirements.}
 
-% MAIN 21 | 40 seconds | cumulative 24:45
+% MAIN 21 | 40 seconds | cumulative 25:15
 \begin{frame}{When restructuring pays off}
 \setlength{\parskip}{0pt}
 \textbf{A transformation has to save more time than it adds.}\par
@@ -918,9 +945,9 @@ Place work on a GPU & More concurrent execution & Transfers and enough work to o
 \researchpoint{Measure total execution time at the required accuracy.}
 \researchcaption{These competing costs motivate an adaptive choice of batch size, ordering, representation, and processor.}
 \end{frame}
-\note{\small\textbf{Slide 21: 40 seconds; finish at 24:45.} Pick two tradeoffs instead of reading every row. More batching is not always better; sorted walks may soon separate. Include preparation, communication, and rebuilding costs in the measurement. This motivates a runtime decision.}
+\note{\small\textbf{Slide 21: 40 seconds; finish at 25:15.} Pick two tradeoffs instead of reading every row. More batching is not always better; sorted walks may soon separate. Include preparation, communication, and rebuilding costs in the measurement. This motivates a runtime decision.}
 
-% MAIN 22 | 85 seconds | cumulative 26:10
+% MAIN 22 | 85 seconds | cumulative 26:40
 \begin{frame}{Ongoing work: fused walks for graph learning}
 \setlength{\parskip}{0pt}
 \textbf{NeuralBloom: constructing NeuralWalker's walks and structural encodings.}\par
@@ -949,9 +976,9 @@ in walk computation\par
 \researchpoint{The systems question: how much work can stay inside one kernel?}
 \researchcaption{Ongoing work. Timing covers walk computation, not complete model training. Fusion depth must account for register pressure and available parallelism.}
 \end{frame}
-\note{\small\textbf{Slide 22: 85 seconds; finish at 26:10.} Trace the intermediate state being written and read, then the fused walk thread. Present the approximately twofold speedup only for walk computation. Explain the link to the earlier compute/data-movement tradeoff. Sources: NeuralBloom README and paper/main.tex; result supplied by presenter.}
+\note{\small\textbf{Slide 22: 85 seconds; finish at 26:40.} Trace the intermediate state being written and read, then the fused walk thread. Present the approximately twofold speedup only for walk computation. Explain the link to the earlier compute/data-movement tradeoff. Sources: NeuralBloom README and paper/main.tex; result supplied by presenter.}
 
-% MAIN 23 | 105 seconds | cumulative 27:55
+% MAIN 23 | 105 seconds | cumulative 28:25
 \begin{frame}{Ongoing work: reconstruction and trajectory execution}
 \setlength{\parskip}{0pt}
 \begin{columns}[T,onlytextwidth]
@@ -987,9 +1014,9 @@ in walk computation\par
 \end{columns}
 \researchcaption{Both projects are ongoing. Battus changes the approximation; deterministic trajectories need their own accuracy analysis. The timeline is schematic.}
 \end{frame}
-\note{\small\textbf{Slide 23: 105 seconds; finish at 27:55.} Give each project one question and one systems mechanism. Battus simplifies inference, then maps regular passes to CUDA. The trajectory prototype interleaves state chains to expose outstanding memory work even without shared addresses. Preserve the distinction between deterministic trajectories and independent Monte Carlo walks. Sources: Battus method section; randomwalk/walk.h and metal.h.}
+\note{\small\textbf{Slide 23: 105 seconds; finish at 28:25.} Give each project one question and one systems mechanism. Battus simplifies inference, then maps regular passes to CUDA. The trajectory prototype interleaves state chains to expose outstanding memory work even without shared addresses. Preserve the distinction between deterministic trajectories and independent Monte Carlo walks. Sources: Battus method section; randomwalk/walk.h and metal.h.}
 
-% MAIN 24 | 115 seconds | cumulative 29:50
+% MAIN 24 | 115 seconds | cumulative 30:20
 \begin{frame}{Finding regularity systematically}
 \setlength{\parskip}{0pt}
 \textbf{Can a runtime choose how to batch and schedule irregular work?}\par
@@ -1017,9 +1044,9 @@ Little predicted benefit & Keep the current order\\\bottomrule
 \researchpoint{Start with graph walks and NeuralBloom; extend to representation and CPU--GPU placement.}
 \researchcaption{Longer-term workloads: sparse and dynamic graphs, sampling-heavy ML systems, and scientific Monte Carlo. Each extension needs its own cost model and correctness conditions.}
 \end{frame}
-\note{\small\textbf{Slide 24: 115 seconds; finish at 29:50.} State the hypothesis: short observations can predict whether locality grouping or latency overlap will repay its cost. The table is a proposed policy structure, not a validated result. Explain held-out evaluation, tuned baselines, and task-owned random state. Broaden from the first scheduler to representation and heterogeneous placement, with sparse ML and scientific sampling as later testbeds.}
+\note{\small\textbf{Slide 24: 115 seconds; finish at 30:20.} State the hypothesis: short observations can predict whether locality grouping or latency overlap will repay its cost. The table is a proposed policy structure, not a validated result. Explain held-out evaluation, tuned baselines, and task-owned random state. Broaden from the first scheduler to representation and heterogeneous placement, with sparse ML and scientific sampling as later testbeds.}
 
-% MAIN 25 | 30 seconds | cumulative 30:20
+% MAIN 25 | 30 seconds | cumulative 30:50
 \begin{frame}[plain]{}
 \setlength{\parskip}{0pt}
 \centering\color{DeepNavy}
@@ -1037,78 +1064,12 @@ Next: predict and choose these transformations automatically.\par
 \vspace{0.45cm}
 \textbf{Questions}
 \end{frame}
-\note{\small\textbf{Slide 25: 30 seconds; finish at 30:20.} Close with the algorithm--machine connection and the independent future program. Graph algorithms supplied demanding cases; the decisions concern state, scheduling, data movement, and correctness across irregular workloads.}
+\note{\small\textbf{Slide 25: 30 seconds; finish at 30:50.} Close with the algorithm--machine connection and the independent future program. Graph algorithms supplied demanding cases; the decisions concern state, scheduling, data movement, and correctness across irregular workloads.}
 
 \appendix
 
 \begin{frame}[plain,noframenumbering]\centering\Huge\bfseries Backup slides\end{frame}
 \relax
-
-\begin{frame}{Backup: component labels across samples}
-\setlength{\parskip}{0pt}
-\textbf{Undirected graphs: a source reaches every vertex in its component.}\par
-\vspace{0.22cm}
-Initialize each label with its vertex ID: $\ell_r(v)=v$.\par
-\vspace{0.10cm}
-\begin{center}
-\begin{tikzpicture}[x=1cm,y=1cm,>=Latex,
- vertex/.style={circle,draw=Teal,fill=Teal!10,minimum size=0.62cm,inner sep=0pt,font=\normalsize}]
- \node[vertex] (one) at (0,0) {1};
- \node[vertex] (four) at (2.8,0) {4};
- \node[vertex] (three) at (5.6,0) {3};
- \draw[Teal,thick] (one)--(four)--(three);
- \node[font=\small,text=MidGray] at (2.8,0.6) {One connected component in sample $r$};
- \draw[->,Steel,thick] (2.8,-0.43)--(2.8,-0.90);
- \node[font=\normalsize,text=DeepNavy] at (2.8,-1.20)
-   {All three vertices converge to label 1.};
-\end{tikzpicture}
-\end{center}
-\vspace{-0.10cm}
-Update over active neighbors until labels stop changing:\par
-\vspace{0.10cm}
-{\centering $\displaystyle
- \ell_r(v)\leftarrow\min_{x\in\{v\}\,\cup\,N_{G_r}(v)}\ell_r(x)$\par}
-\vspace{0.23cm}
-\textbf{Across samples:} each lane updates its own label using its sample's active edges.\par
-\vspace{0.10cm}
-\takeaway{Component sizes give single-source reach; seed sets count each component once.}
-\end{frame}
-\note{\small Undirected case only: each source reaches its connected component. Propagate minimum IDs until convergence, then use component sizes to compute reach. For several sources, count each distinct component once. Label propagation is standard; the contribution is its organization across samples.}
-
-\begin{frame}{Backup: reconstructing sampled edges}
-\setlength{\parskip}{0pt}
-Store one random seed $X_r$ per sample and a symmetric hash $h(u,v)=h(v,u)$ per edge.\par
-\vspace{0.28cm}
-\begin{center}
-\begin{tikzpicture}[x=1cm,y=1cm,every node/.style={font=\normalsize},
- cell/.style={draw=LightGray,fill=Mist,minimum width=1.08cm,minimum height=0.53cm,inner sep=0pt}]
- \foreach \i in {1,...,4}{
-   \node[text=MidGray,font=\small] at ({4.1+1.3*(\i-1)},0) {$r=\i$};
- }
- \node[anchor=west] at (0,-0.65) {Stored seeds $X_r$};
- \foreach \i/\x in {1/5,2/4,3/14,4/7}{
-   \node[cell] at ({4.1+1.3*(\i-1)},-0.65) {\x};
- }
- \node[anchor=west] at (0,-1.43) {XOR $h(1,4)=6$};
- \foreach \i/\x in {1/3,2/2,3/8,4/1}{
-   \node[cell] at ({4.1+1.3*(\i-1)},-1.43) {\x};
- }
- \node[anchor=west] at (0,-2.21) {Active?\ ($\leq 7$)};
- \foreach \i in {1,2,4}{
-   \node[cell,fill=Teal!12,draw=Teal,text=Teal!80!black] at ({4.1+1.3*(\i-1)},-2.21) {yes};
- }
- \node[cell,text=MidGray] at (6.7,-2.21) {no};
-\end{tikzpicture}
-\end{center}
-\vspace{0.03cm}
-{\centering $\{u,v\}\in G_r\ \Longleftrightarrow\ X_r\oplus h(u,v)\leq T_{uv}$\par}
-\vspace{0.20cm}
-\takeaway{Recover the same edge decision on demand, without storing each sampled graph.}
-\vspace{0.12cm}
-{\scriptsize\color{MidGray}Illustrative 4-bit values; $T_{uv}$ encodes the edge probability. Random seeds identify samples, not influence sources.\par
-Repeatability alone does not establish independent edge sampling.\par}
-\end{frame}
-\note{\small Trace hash six and random keys five, four, fourteen, seven to XOR results three, two, eight, one. Threshold seven activates samples one, two, and four. This is the undirected symmetric-hash construction. Reusing inputs establishes repeatability; joint edge independence needs separate justification. Source: InFuseR-MG, Section 3.1.}
 
 \begin{frame}{Backup: fused-sampling implementation in InFuseR-MG}
 \relax
