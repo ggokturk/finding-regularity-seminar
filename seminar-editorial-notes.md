@@ -1,63 +1,45 @@
 # Faculty seminar editorial notes
 
-The deck has **26 main slides**, followed by a divider and **14 backup slides**. Prepared delivery is **31:10**, leaving about nine minutes for questions. The title is **Finding Regularity: High-Performance Computing for Graph Algorithms**.
+The deck has **25 main slides**, followed by a divider and **16 backup slides**: **42 static PDF pages**. The title is **Finding Regularity: High-Performance Computing for Graph Algorithms**.
 
-## Revision scope
+Prepared narration totals **30:20**. Reserve **35 minutes** for delivery with pauses and brief interruptions, with **40 minutes as the ceiling** in the one-hour seminar and interview session. This leaves roughly 20–25 minutes for discussion and interview questions. Timings are rehearsal targets, not measured delivery times.
 
-The latest opening revision applies review items 2–5. Slides 1–5 remain unchanged, including the introductory text on slides 1–3. Slide 6 now leads with the four sample counts and their concrete average, with priority-queue mechanics and general reachability formulas removed from the main slide. Slide 7 states the presenter's design decision explicitly. Slide 8 keeps the state-layout comparison and removes the hardware catalogue and unscoped latency/throughput figures. Slide 9 explains undirected component labels and connects their updates to the sample lanes. Slide 10 separately explains edge reconstruction and distinguishes repeatability from edge independence. The reconstruction mechanism now leads directly into its performance payoff on slide 11.
+## Opening revision for an ML faculty audience
 
-There are now 26 main slides. Every slide is static, and the compiled PDF has 41 pages including backups. Slides 9 and 10 share the original 1:45 allocation (0:50 and 0:55), preserving the 31:10 total and all later cumulative timings. The script and embedded cues follow the new order.
+The opening now follows a continuous argument: irregular memory access limits useful parallelism; shared topology creates a sample dimension to organize; adjacent sample state improves the access pattern; reconstructing the same edge decisions avoids materialized sampled graphs; the fused-sampling result supplies the payoff.
 
-The previous revision reviewed every slide after slide 9. The main argument progresses from shared topology to state representation, sample scheduling, and dependent random-walk addresses. SABA remains the longest worked scheduling example. Ongoing projects and the future agenda occupy the final portion of the talk.
+The former slides 9 and 10 are replaced by one main slide, **The same sampled edges on every pass**. Its left side explains the retained sample key and edge hash; its right side shows the same active mask for edge 1 to 4 on successive passes. Evolving vertex state and fixed graph membership are distinguished before discussing the memory saving. The component-label and numerical XOR examples are preserved as the first two backup slides.
 
-## What changed
+This avoids switching the main explanation from directed reachability to an undirected component algorithm before the payoff. The undirected component-label implementation is introduced briefly as an example of exact state on slide 11, with its full update available in backup. The merged slide illustrates repeatability; it does not claim that repeatability establishes the required joint sampling distribution.
 
-| Slides | Revision | Purpose |
+| Slides | Editorial decision | Delivery purpose |
 |---|---|---|
-| 9 | Undirected minimum-label propagation, connected to the sample lanes | Explain the operation performed by each sample lane |
-| 10 | Four stored random seeds and a traced XOR membership mask | Explain how each pass recovers the same active edges without storing each sampled graph |
-| 11 | Stored-sample and fused-sampling execution diagrams beside the existing result | Show exactly which intermediate data movement is removed; seed sorting is introduced later with FASST |
-| 12 | Vertex-by-sample state matrix and the reached set from slide 6 | Make the remaining state cost and the downstream count query concrete |
-| 13 | Leading-zero example and a four-sample masked register merge | Explain the sketch's information, idempotence, and uniform machine operation |
-| 14 | The same sample entries mapped to CPU lanes, GPU threads, and device partitions | Distinguish hardware mappings from sequential pipeline stages |
-| 15 | Sample IDs remain visible before and after FASST assignment | Show what is reordered and why a whole warp can skip work |
-| 16 | Existing scaling data paired with local propagation and global reduction | Explain the decomposition behind the reported result |
-| 17 | Four walks request one, then three, then four adjacency rows | Expose dependent addresses and loss of exact alignment |
-| 18 | The same eight random keys grouped into visible bouquets | Make the scheduling contribution traceable and define “bouquet” |
-| 19 | Twelve inputs partitioned into equal intervals, with residual 7 → 3 highlighted | Explain conditional uniformity before presenting the full rule in backup |
-| 20 | Existing cache-miss values shown as proportional bars | Connect direct vectorization, locality, and measured memory behavior |
-| 21–22 | Machine cost / algorithmic change / effect, followed by explicit tradeoffs | Synthesize a methodology and motivate runtime decisions |
-| 23–24 | Fused-walk pipeline, observed/missing diffusion states, and interleaved trajectory work | Give each ongoing project a concrete systems mechanism |
-| 25–26 | Proposed observations and scheduling choices, evaluation criteria, and broader extensions | Establish a testable independent research program |
+| 1–2 | Keep title and background brief | Establish research identity within the first minute |
+| 3 | Shorten the HPC overview to 30 seconds | Preview the arithmetic versus data-movement tradeoff |
+| 4 | Keep the lane diagram and trace only selected lanes | Establish memory stalls and unequal useful work |
+| 5 | Add a spoken connection to current graph-learning work | Explain the relevance to the faculty audience early |
+| 6 | Explain one sample, then point to all four counts and their average | Establish repeated stochastic graph traversal without an edge-by-edge tour |
+| 7–8 | Retain shared topology and the column/row access comparison | Make the presenter's execution decision concrete |
+| 9 | Combine repeated propagation and reconstructed edge membership | Connect sample lanes directly to the avoided sampled-graph storage |
+| 10 | Keep the fused-sampling pipeline and scoped result | Reach the first quantitative payoff at 10:40 |
+| 11 | Briefly define component labels as an example of retained state | Connect memory savings to the remaining state bottleneck |
+| 12–25 | Renumber and update all cumulative timings | Preserve the remainder of the research narrative |
 
-The backups retain implementation and correctness depth. The FASST backup now explains the actual key operation and device-local edge set instead of opaque set notation. Repeated paper-section footers were removed where unnecessary. The duplicate SABA measurement-scope slide was replaced by an explanation of when bouquet locality persists. The main performance slide and the benchmark backup retain the distinction between the reported earlier implementation and the corrected sampler.
+The main narration, timing table, source comments, and embedded speaker cues use the same numbering and time allocations. Slides remain static.
 
 ## Technical boundaries retained
 
-- Slide 9 uses undirected connected components; it does not equate minimum-label propagation with directed reachability. Slide 10’s membership mask matches edge one–four in the earlier example. Seeds are reused across all passes. Repeatable XOR decisions do not alone prove joint edge independence.
-
-- The fused-sampling comparison supports on-demand sampling. It does not isolate the sample-lane transpose; batching is an additional transformation.
-- Compact registers still occupy a vertex-by-sample structure. They change entry size, operations, and approximation rather than automatically reducing the dimensions of that structure.
-- A sketch register is a rare-pattern statistic, not an exact cardinality. The main merge example leaves the inactive sample unchanged. Monte Carlo evaluation and error-adaptive rebuilding remain part of HyperFuseR.
-- FASST sorts existing keys once and keeps their state associated with them. It exploits structure in the fused decision construction, not a generic guarantee of arbitrary hashing or a perfect per-edge sort.
-- SABA's grouping example counts distinct requested adjacency rows, not physical cache misses. Later steps can diverge.
-- The sampler explanation uses residual-range consumption and permanent unbiased fallback. Correctness is conditional on the labeled walk's history. It does not rely on the older fixed-seed/XOR argument or independence of sorted ranks.
-- Distributional validity, estimator order invariance, and exact replay remain separate. The replay backup retains the requirement for walk-owned fallback randomness.
-- NeuralBloom's roughly twofold result remains preliminary and scoped to walk computation. Battus and deterministic trajectories have distinct approximation requirements.
-- No benchmark was rerun and no new empirical result was introduced. The bar chart uses the existing reported values.
-
-## Assessment against the hiring-talk goal
-
-| Question | Assessment after revision |
-|---|---|
-| Is the research question clear? | Each section answers how an algorithm can change the memory or scheduling cost already introduced. The ending returns to systematic architecture-aware choices. |
-| Can a general CS audience follow? | State matrices, named samples, explicit masks, and small integer ranges replace several abstract summaries. New terms such as “bouquet” are defined where first used. |
-| Is there technical depth? | Masked sketch propagation, sample/device decomposition, conditional residual uniformity, and explicit tradeoffs provide concentrated depth. Implementation and replay details remain available in backup. |
-| Is the personal contribution visible? | The narration identifies the design decision in first person and uses reported joint results for evidence. It avoids implying ownership of standard sketch primitives. |
-| Do the papers form one program? | Shared topology exposes state costs; sample ordering extends to devices; path-dependent walks force a new scheduling mechanism. |
-| Does the talk suit an ML-heavy department seeking systems expertise? | The core remains algorithms, memory, and execution. NeuralBloom supplies a concrete current connection to graph learning, with a narrowly scoped result. |
-| Is the future agenda independent and testable? | Adaptive scheduling has a hypothesis, observations, actions, baseline comparisons, and overhead-aware evaluation. Representation and CPU–GPU placement broaden the program. |
-| Is there unnecessary implementation or benchmark detail? | Main results retain one purpose each. Proof details, intrinsics, extended comparisons, and sampler replay remain in backup. |
+- Main slide 9 follows the directed running example only to illustrate repeated edge membership. The backup component-label algorithm applies to undirected graphs, where component sizes support influence estimates; several seeds count each component once.
+- The backup XOR construction uses a symmetric hash for undirected edges. Reusing keys establishes repeatability across passes and directions, not joint edge independence.
+- The fused-sampling comparison supports on-demand sampling. Samples execute separately in that comparison; it does not isolate the sample-lane transformation.
+- Compact registers still occupy a vertex-by-sample structure. They change entry size, operations, and approximation rather than removing that structure's dimensions.
+- A sketch register is a rare-pattern statistic, not an exact cardinality. Monte Carlo evaluation and error-adaptive rebuilding remain part of HyperFuseR.
+- FASST sorts existing keys once and keeps their state associated with them. Its grouping exploits the actual fused decision construction, not a generic property of arbitrary hashing.
+- SABA's grouping example counts distinct requested adjacency rows, not physical memory transactions. Later steps can diverge.
+- The corrected sampler uses residual-range consumption and permanent unbiased fallback. Validity is conditional on the labeled walk's history; sorting alone cannot repair an incorrect distribution.
+- The SABA cache and timing results concern the earlier implementation, not measurements of the corrected residual sampler.
+- NeuralBloom's roughly twofold result remains preliminary and limited to walk computation. Battus and deterministic trajectories have distinct approximation requirements.
+- No benchmark was rerun and no empirical claim was added.
 
 ## Source map for preparation and questions
 
@@ -76,14 +58,17 @@ Only source material needed to explain the algorithms was consulted. These proje
 
 ## Rehearsal priorities
 
-- **Slide 13, ending at 14:25:** distinguish a register value from a count, then trace the inactive lane through the merge. The planned 2:10 allows pointing and explanation.
-- **Slide 15, ending at 17:05:** follow one sample identity across assignments. Explain why skipping a warp differs from eliminating the sample's contribution.
-- **Slides 18–19, ending at 23:05:** first demonstrate the locality opportunity, then consume the residual range correctly. Keep these two arguments separate.
-- **Slide 20, ending at 24:05:** state the measurement scope once and connect the bars to the address pattern. Avoid turning this into a benchmark inventory.
-- **Slide 25, ending at 30:40:** describe the scheduling hypothesis as proposed work. State tuned static baselines, unseen workloads, total cost, and fixed accuracy as the evaluation criteria.
+- **Slide 8, ending at 8:10:** slowly trace the scattered column and adjacent row. Keep the distinction between logical state accesses and physical memory transactions.
+- **Slide 9, ending at 9:25:** distinguish changing vertex state from fixed edge decisions; trace only edge 1 to 4. Keep the component update and XOR arithmetic for questions.
+- **Slide 10, ending at 10:40:** identify the stored graph write/read that fusion removes, then state the result and its sequential comparison scope.
+- **Slide 12, ending at 13:35:** distinguish a register value from a count, then trace the inactive lane through the merge.
+- **Slide 14, ending at 16:15:** follow one sample identity across assignments. Explain why skipping a warp differs from removing a sample's contribution.
+- **Slides 17–18, ending at 22:15:** demonstrate locality opportunity, then explain conditional residual uniformity.
+- **Slide 19, ending at 23:15:** state the historical measurement scope once.
+- **Slide 24, ending at 29:50:** present the scheduling hypothesis as proposed work, with tuned baselines, unseen workloads, total cost, and fixed accuracy as evaluation criteria.
 
-The revised narration for slides 11–26 ranges from approximately 110 to 138 words per minute at the assigned timings, leaving room for pointing at the technical diagrams. These are preparation targets, not a substitute for an aloud rehearsal. If questions consume two minutes, shorten the synthesis and current-project details before cutting the worked sketch or residual-range examples.
+The 35-minute delivery slot includes about four and a half minutes beyond the prepared narration. Rehearse aloud with pointing and pauses. If discussion runs long, shorten synthesis and current-project detail while preserving time to explain the independent research agenda.
 
 ## Build and verification
 
-Use the build commands in `README.md`. The prepared PDF is `seminar.pdf`; the narration is `seminar-narrative.md`. Compact delivery cues remain embedded in the LaTeX source.
+Use the build commands in `README.md`. The prepared PDF is `seminar.pdf`; the narration is `seminar-narrative.md`. Compact delivery cues remain embedded in the LaTeX source. Check changed slides visually and verify main-slide numbering, duration sums, note timings, page count, and the absence of incremental overlays before delivery.
