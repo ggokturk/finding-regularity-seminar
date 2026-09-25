@@ -6,7 +6,7 @@ Prepared narration totals **30:50**. Reserve **35 minutes** for delivery with pa
 
 ## Opening revision for a CS faculty audience
 
-Slide 9 is devoted to **Hash-based edge sampling**. The large XOR threshold equation and the original four-sample calculation fill the slide. Its narration connects reconstruction and fused sample updates, then introduces lock-free propagation through idempotent pull updates with one writer per state entry. The DiFuseR scheduling preview is removed from this slide; component labels are introduced later.
+Slide 9 is devoted to **Hash-based edge sampling**. The large XOR threshold equation and the original four-sample calculation fill the slide. Its takeaway explicitly retains reconstruction and vectorized updates, followed by lock-free propagation through idempotent pull updates. The narration explains the one-writer-per-entry condition. The DiFuseR scheduling preview is removed from this slide; component labels are introduced later.
 
 Slide 11 uses generic state entries to motivate the remaining vertex-by-sample memory cost. Slide 12 puts **MixGreedy's component labels** beside **HyperFuseR's count-distinct sketch registers**. It retains the 1--4--3 example and minimum-label equation on the left and the original leading-zero table on the right. The comparison establishes what each representation stores and how it merges information. MixGreedy is credited for the component computation; the presenter's contribution is accelerating propagation through fused sampling and vectorization.
 

@@ -485,14 +485,14 @@ The lanes share one edge operation.\par}
 \begin{frame}{Hash-based edge sampling}
 \setlength{\parskip}{0pt}
 \textbf{My contribution: hash-based edge sampling fused with traversal.}\par
-\vspace{0.18cm}
+\vspace{0.08cm}
 \centering
 {\small One random seed $X_r$ per sample; one hash per edge.\par
 Undirected case: $h(u,v)=h(v,u)$.\par}
-\vspace{0.12cm}
+\vspace{0.04cm}
 \centering
 {\large $\{u,v\}\in G_r\ \Longleftrightarrow\ \textcolor{Teal}{\boldsymbol{X_r\oplus h(u,v)}}\leq T_{uv}$\par}
-\vspace{0.18cm}
+\vspace{0.08cm}
 \begin{tikzpicture}[x=1cm,y=1cm,every node/.style={font=\normalsize},
  cell/.style={draw=LightGray,fill=Mist,minimum width=1.12cm,minimum height=0.48cm,inner sep=0pt}]
  \foreach \i in {1,...,4}{
@@ -514,7 +514,8 @@ Undirected case: $h(u,v)=h(v,u)$.\par}
 \end{tikzpicture}\par
 
 \vspace{0.04cm}
-\takeaway{Repeatable sampling and idempotent pull updates support lock-free propagation.}
+\takeaway{One sampling rule enables reconstruction and vectorized updates.\par
+Idempotent pull updates support lock-free propagation.}
 \smallsource{Illustrative 4-bit values; $T_{uv}$ encodes the edge probability. Random seeds identify samples, not influence sources.\par
 Repeatability alone does not establish independent edge sampling.}
 \end{frame}

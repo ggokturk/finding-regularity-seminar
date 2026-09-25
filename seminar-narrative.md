@@ -111,7 +111,7 @@ For edge one–four, XOR hash six with seeds five, four, fourteen, and seven. We
 
 Reusing those inputs reconstructs the same decisions on every pass, without storing each sampled graph. Repeatability alone does not establish independent edge sampling.
 
-For a fixed edge, we share its hash across sample lanes and use the resulting mask to update adjacent state.
+One sampling rule enables reconstruction and vectorized updates. For a fixed edge, we share its hash across sample lanes and use the resulting mask to update adjacent state.
 
 These repeated edge decisions also fit idempotent updates: merging the same information again leaves the result unchanged. Our pull execution gives each state entry one writer, which combines its neighbors' values. That avoids locks and atomic merges. The update semantics and ownership rule make this possible.
 
