@@ -6,11 +6,11 @@ Prepared narration totals **30:50**. Reserve **35 minutes** for delivery with pa
 
 ## Opening revision for a CS faculty audience
 
-Slide 9 is devoted to **Hash-based edge sampling**. The large XOR threshold equation and the original four-sample calculation fill the slide. Its takeaway explicitly retains reconstruction and vectorized updates, followed by lock-free propagation through idempotent pull updates. The narration explains the one-writer-per-entry condition. The DiFuseR scheduling preview is removed from this slide; component labels are introduced later.
+Slide 9 is devoted to **Hash-based edge sampling**. The large XOR threshold equation and the original four-sample calculation fill the slide. Its takeaway retains reconstruction and vectorized updates, then previews that the hash structure enables better scheduling later. Component labels are introduced later; this sampling slide does not introduce update idempotence or lock-free execution.
 
 Slide 11 uses generic state entries to motivate the remaining vertex-by-sample memory cost. Slide 12 puts **MixGreedy's component labels** beside **HyperFuseR's count-distinct sketch registers**. It retains the 1--4--3 example and minimum-label equation on the left and the original leading-zero table on the right. The comparison establishes what each representation stores and how it merges information. MixGreedy is credited for the component computation; the presenter's contribution is accelerating propagation through fused sampling and vectorization.
 
-Slide 13 preserves the worked four-sample masked register merge on its own slide. This keeps the exact/approximate representation comparison readable and gives the active-edge mask, inactive sample, and idempotent maximum operation their own explanation. The caption and narration explain the pull ownership rule behind avoiding locks and atomic merges.
+Slide 13 preserves the worked four-sample masked register merge on its own slide. This keeps the exact/approximate representation comparison readable and gives the active-edge mask, inactive sample, and idempotent maximum operation their own explanation.
 
 The exact expression `X_r XOR h(u,v)` returns on the DiFuseR scheduling slide, now slide 15, and in the methodology summary on slide 21. FASST sorts input keys with their sample state; it does not sort each edge's XOR outputs.
 
@@ -20,7 +20,6 @@ Timing is redistributed: slide 9 takes 1:25; the representation comparison takes
 
 - The component-label example on slide 12 explicitly treats undirected graphs. Its minimum-label update identifies connected components; it is not a directed reachability algorithm.
 - The main-slide XOR construction uses a symmetric hash for undirected edges. Reusing keys establishes repeatability across passes and directions, not joint edge independence.
-- The lock-free claim concerns pull updates with one writer per state entry (DiFuseR Section 3.2, Algorithm 2). Idempotence permits repeated merges; it alone does not justify arbitrary concurrent writes or remove memory-consistency requirements.
 - The fused-sampling comparison supports on-demand sampling. Samples execute separately in that comparison; it does not isolate the sample-lane transformation.
 - Compact registers still occupy a vertex-by-sample structure. They change entry size, operations, and approximation rather than removing that structure's dimensions.
 - A sketch register is a rare-pattern statistic, not an exact cardinality. Monte Carlo evaluation and error-adaptive rebuilding remain part of HyperFuseR.
@@ -49,7 +48,7 @@ Only source material needed to explain the algorithms was consulted. These proje
 ## Rehearsal priorities
 
 - **Slide 8, ending at 8:10:** trace the scattered column and adjacent row; distinguish logical accesses from physical memory transactions.
-- **Slide 9, ending at 9:35:** focus on the XOR sampling rule, its numeric example, and repeatable decisions; connect idempotent pull updates with single-writer ownership to lock-free execution.
+- **Slide 9, ending at 9:35:** focus on the XOR sampling rule, its numeric example, and its roles in reconstruction, vectorization, and DiFuseR scheduling.
 - **Slide 10, ending at 10:50:** explain the avoided stored-graph write/read, then state the result and its sequential comparison scope.
 - **Slide 12, ending at 12:55:** introduce component labels and count-distinct registers together. Credit MixGreedy and distinguish exact component identity from a rare-pattern statistic.
 - **Slide 13, ending at 14:05:** trace the inactive sample through the masked merge; explain idempotence and the accuracy/rebuilding scope.
