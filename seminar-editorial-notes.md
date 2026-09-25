@@ -10,6 +10,8 @@ Slide 9 combines the original **Component labels across samples** and **Reconstr
 
 The narration explains edge reconstruction on the left first, then uses those active edges in the component-label update on the right. It explicitly changes from the earlier directed running example to the undirected component algorithm. This preserves the original technical concepts for a CS faculty audience and connects directly to **Compute more, move less** on slide 10.
 
+The exact expression `X_r XOR h(u,v)` is emphasized on slide 9. Its role extends beyond reconstructing samples: the narration explicitly previews DiFuseR's use of sample-key sorting for scheduling. Slide 14 repeats the expression and explains that FASST sorts the input keys, preserving their sample states and decisions. It does not sort each edge's XOR outputs or assume an arbitrary hash would yield the same grouping.
+
 The merged slide retains the original two slides' combined **1:45** explanation time. The separate copies added to backup in the previous revision have been removed. The existing implementation backup retains the detailed hash definition. All later cumulative timings are adjusted by 30 seconds; the prepared talk now totals 30:50.
 
 The shorter HPC introduction and early spoken graph-learning connection remain. The influence-maximization script traces one sample and then its Monte Carlo average. Slides, source comments, embedded cues, and the narrative timing table are synchronized. Every slide is static.

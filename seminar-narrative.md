@@ -104,17 +104,19 @@ We have changed how work is grouped. Let me now show how we recover each sample'
 
 The earlier example used directed edges. Now consider undirected graphs, where a source reaches every vertex in its connected component.
 
-The left side shows how we recover the sampled edges. Store one random seed per sample and a symmetric hash per edge. The random seed identifies the sample; it is distinct from the influence source.
+On the left, store one random seed X-r per sample and a symmetric hash per edge. This seed identifies the sample, separately from the influence source.
 
 For edge one–four, XOR hash six with the four seeds. The results are three, two, eight, and one. Threshold seven activates samples one, two, and four.
 
-Reusing these inputs recovers the same decision on every pass and in both directions. That establishes repeatability; independent edge sampling requires separate justification.
+Keep the expression X-r XOR h of u-v in mind. For a fixed edge, the hash is shared across sample lanes. Later, DiFuseR exploits this exact construction by sorting the sample keys to improve scheduling.
 
-Now use those active edges in the component-label update on the right. Initialize each vertex label with its ID. Repeatedly take the smallest label among that vertex and its active neighbors. Vertices one, four, and three converge to label one.
+Reusing the inputs reproduces the decisions on every pass and in both directions. Repeatability alone does not establish independent edge sampling.
 
-This is the update for the lanes on the previous slide: each lane maintains a label for a different sample and masks inactive edges. Label propagation is standard; my contribution is organizing it across samples.
+Now use those active edges in the component-label update on the right. Initialize each label with its vertex ID, then repeatedly take the minimum over the vertex and its active neighbors. Vertices one, four, and three converge to label one.
 
-Every pass uses the same reconstructed edges. I fuse reconstruction with propagation across samples. Labels remain in memory, but sampled graphs need not be stored. What does that tradeoff save?
+Each lane maintains a label for a different sample and masks inactive edges. Label propagation is standard; my contribution is organizing it across samples.
+
+I fuse reconstruction with propagation. Labels remain in memory, but sampled graphs need not be stored. What does that tradeoff save?
 
 ## 10. Compute more, move less — 1:15
 
@@ -162,9 +164,9 @@ For this edge, samples two, four, six, and eight are active. Look at the origina
 
 Now follow the sample identities to the right. There are still eight samples and four active updates. But one warp contains the active samples, and the other can skip the edge's update altogether. We changed the assignment, not the sampled decisions.
 
-FASST obtains this opportunity by sorting the existing random keys before assigning samples to warps and devices. The sample state must move with its key. This is one ordering used across the graph, not a separate perfect partition computed for every edge.
+Return to the construction from slide nine: X-r XOR h of u-v, compared with the edge threshold. For a fixed edge, the hash is shared across lanes. DiFuseR's FASST sorts the existing X-r keys before assigning samples to warps and devices, exploiting structure in these XOR threshold decisions.
 
-The fused decision construction matters: related keys can give related decisions for a fixed edge. Sorting arbitrary outputs from an arbitrary hash would not promise the same structure.
+Each sample's state moves with its key, so its edge decisions remain unchanged. We sort the input keys once across the graph. We do not sort the XOR outputs separately for every edge. An arbitrary hash-based sampler would not automatically offer the same grouping.
 
 At device scale, the consequence is similar. If no local sample includes an edge, the device can omit that edge. Sample order therefore affects both lane utilization and the graph data each device needs. The aggregate estimate uses the same sample identities, so their placement becomes a scheduling choice.
 
