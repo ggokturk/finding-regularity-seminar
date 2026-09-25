@@ -10,7 +10,7 @@ Research seminar by Gökhan Göktürk.
 - [seminar-editorial-notes.md](seminar-editorial-notes.md): editorial rationale and rehearsal notes.
 - [papers/README.md](papers/README.md): reference-paper provenance. The reference PDFs and manuscript sources are local preparation material and are not included.
 
-The deck contains 25 main slides, followed by a divider and 14 backup slides. Prepared material targets approximately 31 minutes within a 40-minute session including questions.
+The deck contains 26 main slides, followed by a divider and 14 backup slides. All slides are static, giving 41 PDF pages in total. Prepared material targets approximately 31 minutes within a 40-minute session including questions.
 
 ## Build
 
