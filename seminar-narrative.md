@@ -103,15 +103,17 @@ We have changed how work is grouped. Let me now show how we recover each sample'
 
 ## 9. Hash-based edge sampling — 1:25
 
-Hash-based edge sampling is a central contribution of this work. It connects the sample batching we just saw to fused execution and, later, DiFuseR's scheduling strategy.
+Hash-based edge sampling connects sample batching to fused execution. The rule is X-r XOR h of u-v, compared with the edge threshold.
 
-The rule is X-r XOR h of u-v, compared with the edge threshold. We store one random seed per sample and precompute one hash per original edge. For undirected graphs, the hash is symmetric. The random seed identifies the sample, separately from the influence source.
+We store one random seed per sample and precompute one hash per original edge. For undirected graphs, the hash is symmetric. The seed identifies the sample, separately from the influence source.
 
 For edge one–four, XOR hash six with seeds five, four, fourteen, and seven. We get three, two, eight, and one. Threshold seven activates samples one, two, and four.
 
-Reusing those inputs reconstructs the same decisions on every pass. We can therefore sample inside traversal without storing each sampled graph. Repeatability alone does not establish independent edge sampling.
+Reusing those inputs reconstructs the same decisions on every pass, without storing each sampled graph. Repeatability alone does not establish independent edge sampling.
 
-For a fixed edge, its hash is shared across sample lanes. We combine it with adjacent sample seeds, then use the resulting mask to update adjacent state. Later, DiFuseR sorts those same sample seeds to exploit structure in the XOR decisions for scheduling.
+For a fixed edge, we share its hash across sample lanes and use the resulting mask to update adjacent state.
+
+These repeated edge decisions also fit idempotent updates: merging the same information again leaves the result unchanged. Our pull execution gives each state entry one writer, which combines its neighbors' values. That avoids locks and atomic merges. The update semantics and ownership rule make this possible.
 
 First, let us look at the performance benefit of avoiding stored sampled graphs.
 
@@ -155,7 +157,7 @@ In sample one, take the maximum of two and four: the new register is four. Sampl
 
 Maximum is idempotent: merging the same information again changes nothing. This is what lets multiple paths propagate a reached vertex's information without inflating the register simply through repetition.
 
-The representation gives smaller entries, contiguous sample state, and one uniform merge operation for active lanes. My representation choice serves both the query and the hardware.
+The entries are compact and contiguous, with a uniform merge for active lanes. In pull execution, one writer owns each entry and combines its neighbors' values. Together with idempotence, this supports the lock-free updates mentioned earlier.
 
 There is an accuracy cost. HyperFuseR checks discrepancies against Monte Carlo evaluations and rebuilds summaries when needed. The sketch is a fast influence oracle within that larger algorithm; the surrounding evaluation and rebuilding still matter.
 
