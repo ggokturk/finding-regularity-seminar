@@ -482,54 +482,52 @@ The lanes share one edge operation.\par}
 \note{\small\textbf{Slide 8: 145 seconds; finish at 8:10.} Trace the highlighted column and row slowly. Both diagrams use vertex-major storage. Four lanes following different neighbors within one sample access separate rows. Holding an edge fixed and assigning samples to lanes gives adjacent state. These are logical accesses, not fixed transaction counts. Each sample keeps its own state and inactive updates are masked. Larger batches trade topology reuse against footprint and inactive work. Transition to reconstructing each sample's active edges, then using those edges in the undirected component-label update.}
 
 % MAIN 09 | 105 seconds | cumulative 9:55
-\begin{frame}{Fused sampling and vectorized label updates}
+\begin{frame}{Hash-based edge sampling}
 \setlength{\parskip}{0pt}
-\textbf{My contribution: reconstruct edges inside vectorized sample updates.}\par
+\textbf{My contribution: hash-based edge sampling fused with traversal.}\par
 \vspace{0cm}
 \begin{columns}[T,onlytextwidth]
-\column{0.53\textwidth}\setlength{\parskip}{0pt}
-\textbf{\color{Teal}Reconstructing sampled edges}\par
-\vspace{0.06cm}
-{\small Store a random seed $X_r$ per sample and\par
-a symmetric edge hash $h(u,v)=h(v,u)$.\par}
-\vspace{0.07cm}
+\column{0.63\textwidth}\setlength{\parskip}{0pt}
+{\small One random seed $X_r$ per sample; one hash per edge.\par
+Undirected case: $h(u,v)=h(v,u)$.\par}
+\vspace{0.12cm}
 \centering
-\begin{tikzpicture}[x=1cm,y=1cm,every node/.style={font=\small},
- cell/.style={draw=LightGray,fill=Mist,minimum width=0.69cm,minimum height=0.46cm,inner sep=0pt}]
+{\large $\{u,v\}\in G_r\ \Longleftrightarrow\ \textcolor{Teal}{\boldsymbol{X_r\oplus h(u,v)}}\leq T_{uv}$\par}
+\vspace{0.18cm}
+\begin{tikzpicture}[x=1cm,y=1cm,every node/.style={font=\normalsize},
+ cell/.style={draw=LightGray,fill=Mist,minimum width=0.86cm,minimum height=0.48cm,inner sep=0pt}]
  \foreach \i in {1,...,4}{
-   \node[text=MidGray] at ({2.7+0.85*(\i-1)},0) {$r=\i$};
+   \node[text=MidGray] at ({3.2+1.03*(\i-1)},0) {$r=\i$};
  }
  \node[anchor=west] at (0,-0.57) {Stored seeds $X_r$};
  \foreach \i/\x in {1/5,2/4,3/14,4/7}{
-   \node[cell] at ({2.7+0.85*(\i-1)},-0.57) {\x};
+   \node[cell] at ({3.2+1.03*(\i-1)},-0.57) {\x};
  }
  \node[anchor=west] at (0,-1.18) {XOR $h(1,4)=6$};
  \foreach \i/\x in {1/3,2/2,3/8,4/1}{
-   \node[cell] at ({2.7+0.85*(\i-1)},-1.18) {\x};
+   \node[cell] at ({3.2+1.03*(\i-1)},-1.18) {\x};
  }
  \node[anchor=west] at (0,-1.79) {Active?\ ($\leq7$)};
  \foreach \i in {1,2,4}{
-   \node[cell,fill=Teal!12,draw=Teal,text=Teal!80!black] at ({2.7+0.85*(\i-1)},-1.79) {yes};
+   \node[cell,fill=Teal!12,draw=Teal,text=Teal!80!black] at ({3.2+1.03*(\i-1)},-1.79) {yes};
  }
- \node[cell,text=MidGray] at (4.4,-1.79) {no};
+ \node[cell,text=MidGray] at (5.26,-1.79) {no};
 \end{tikzpicture}\par
-\vspace{0.04cm}
-{\normalsize $\{u,v\}\in G_r\ \Longleftrightarrow\ \textcolor{Teal}{\boldsymbol{X_r\oplus h(u,v)}}\leq T_{uv}$\par}
-\column{0.43\textwidth}\setlength{\parskip}{0pt}
-\textbf{\color{Steel}MixGreedy\textquotesingle s component step}\par
+\column{0.33\textwidth}\setlength{\parskip}{0pt}
+{\small\textbf{\color{Steel}MixGreedy\textquotesingle s component step}}\par
 \vspace{0.06cm}
-{\small Undirected case: $\ell_r(v)=v$ initially.\par}
+{\small Initialize $\ell_r(v)=v$.\par}
 \vspace{0.04cm}
 \centering
 \begin{tikzpicture}[x=1cm,y=0.82cm,>=Latex,
  vertex/.style={circle,draw=Steel,fill=Mist,minimum size=0.62cm,inner sep=0pt,font=\normalsize}]
  \node[vertex] (one) at (0,0) {1};
- \node[vertex] (four) at (2.2,0) {4};
- \node[vertex] (three) at (4.4,0) {3};
+ \node[vertex] (four) at (1.5,0) {4};
+ \node[vertex] (three) at (3,0) {3};
  \draw[Steel,thick] (one)--(four)--(three);
- \draw[->,Steel,thick] (2.2,-0.43)--(2.2,-0.78);
- \node[font=\small,text=DeepNavy] at (2.2,-1.03)
-   {All three converge to label 1.};
+ \draw[->,Steel,thick] (1.5,-0.43)--(1.5,-0.78);
+ \node[font=\small,text=DeepNavy] at (1.5,-1.03)
+   {Converge to label 1.};
 \end{tikzpicture}\par
 \vspace{0.06cm}\raggedright
 {\small Merge labels until convergence:\par}
@@ -537,14 +535,14 @@ a symmetric edge hash $h(u,v)=h(v,u)$.\par}
 {\small\centering $\displaystyle
  \ell_r(v)\leftarrow\min_{x\in\{v\}\,\cup\,N_{G_r}(v)}\ell_r(x)$\par}
 \vspace{0.06cm}
-{\small I vectorize these updates across samples.\par}
+{\small Updates use reconstructed edges.\par}
 \end{columns}
 \vspace{0.04cm}
-\takeaway{The XOR construction supports both edge reconstruction and sample scheduling.}
+\takeaway{One sampling rule enables reconstruction, vectorized updates, and DiFuseR scheduling.}
 \smallsource{Illustrative 4-bit values; $T_{uv}$ encodes the edge probability. Random seeds identify samples, not influence sources.\par
 Repeatability alone does not establish independent edge sampling.}
 \end{frame}
-\note{\small\textbf{Slide 9: 105 seconds; finish at 9:55.} Lead with the contribution: fused edge reconstruction and vectorized updates across samples. Credit MixGreedy for the underlying component computation, and treat the minimum-label example as supporting context. The undirected case reaches all vertices in a component. Spend most of the explanation on the left: trace hash six and sample seeds five, four, fourteen, seven to XOR results three, two, eight, one. Threshold seven activates samples one, two, and four. Emphasize X_r XOR h(u,v), whose fixed edge hash is shared across sample lanes; DiFuseR later exploits this construction for scheduling. Reusing inputs establishes repeatability, not joint edge independence. Briefly point to component 1--4--3 converging to label one. Explain the acceleration: reconstruct active edges inside the traversal, reuse one edge across sample lanes, and update adjacent labels with masked vector operations. Retain labels, avoid materialized sampled graphs, then transition to the scoped performance evidence on slide 10. Sources: InFuseR-MG, Sections 3.1--3.3; DiFuseR, Sections 4.1 and 5.4.}
+\note{\small\textbf{Slide 9: 105 seconds; finish at 9:55.} Lead with hash-based edge sampling as a central contribution. Explain the large sampling equation before its worked XOR example. Show how the same rule supports on-demand reconstruction, vectorized sample updates, and later DiFuseR scheduling. Credit MixGreedy for the underlying component computation, and treat the minimum-label example as supporting context. The undirected case reaches all vertices in a component. Spend most of the explanation on the left: trace hash six and sample seeds five, four, fourteen, seven to XOR results three, two, eight, one. Threshold seven activates samples one, two, and four. Emphasize X_r XOR h(u,v), whose fixed edge hash is shared across sample lanes; DiFuseR later exploits this construction for scheduling. Reusing inputs establishes repeatability, not joint edge independence. Briefly point to component 1--4--3 converging to label one. Explain the acceleration: reconstruct active edges inside the traversal, reuse one edge across sample lanes, and update adjacent labels with masked vector operations. Retain labels, avoid materialized sampled graphs, then transition to the scoped performance evidence on slide 10. Sources: InFuseR-MG, Sections 3.1--3.3; DiFuseR, Sections 4.1 and 5.4.}
 
 % Helpers for the research core; the opening slides retain their own layout.
 \newcommand{\researchcaption}[1]{\par\vspace{0.12cm}{\scriptsize\color{MidGray}#1\par}}
@@ -920,14 +918,14 @@ Faster walk processing\par
 {\small\renewcommand{\arraystretch}{1.25}
 \begin{tabular}{@{}>{\raggedright\arraybackslash}p{3.6cm}>{\raggedright\arraybackslash}p{5.2cm}>{\raggedright\arraybackslash}p{4.8cm}@{}}
 \toprule\textbf{Observed cost} & \textbf{Algorithmic change} & \textbf{Architectural effect}\\\midrule
-Repeated graph reads & Process samples together; reconstruct decisions & Reuse topology and avoid stored samples\\
+Repeated graph reads & Hash-based edge sampling; batched updates & Reuse topology and avoid stored samples\\
 Large exact state & Estimate reach with mergeable registers & Smaller entries and uniform updates\\
-Inactive sample lanes & Sort keys and partition samples & Whole-batch skips and device-local work\\
+Inactive sample lanes & Exploit XOR sampling: sort keys, partition samples & Whole-batch skips and device-local work\\
 Unrelated walk addresses & Arrange trajectories using sampling structure & More opportunities to reuse adjacency\\\bottomrule
 \end{tabular}\par}
 \researchpoint{Change execution order, representation, or the sampling construction.}
 \end{frame}
-\note{\small\textbf{Slide 20: 50 seconds; finish at 24:35.} Summarize the decisions, not a list of papers. Each row connects a cost, a permissible algorithmic change, and a hardware consequence. Exactness, approximation, and stochastic validity remain distinct requirements.}
+\note{\small\textbf{Slide 20: 50 seconds; finish at 24:35.} Summarize the decisions, not a list of papers. Explicitly connect the first and third rows: hash-based edge sampling supports both fused batched execution and DiFuseR sample-key scheduling. Each row connects a cost, a permissible algorithmic change, and a hardware consequence. Exactness, approximation, and stochastic validity remain distinct requirements.}
 
 % MAIN 21 | 40 seconds | cumulative 25:15
 \begin{frame}{When restructuring pays off}

@@ -6,11 +6,11 @@ Prepared narration totals **30:50**. Reserve **35 minutes** for delivery with pa
 
 ## Opening revision for a CS faculty audience
 
-Slide 9 combines the original **Component labels across samples** and **Reconstructing sampled edges** slides directly. The smaller right column credits MixGreedy for the component step and retains the 1--4--3 example and minimum-label equation as context. The title and lead sentence foreground fused sampling and vectorized updates as the presenter's contribution. The left column retains the stored seeds 5, 4, 14, 7; XOR with edge hash 6; results 3, 2, 8, 1; threshold 7; and the edge-membership equation.
+Slide 9 combines the original **Component labels across samples** and **Reconstructing sampled edges** slides directly. The smaller right column credits MixGreedy for the component step and retains the 1--4--3 example and minimum-label equation as context. Hash-based edge sampling is the title and central subject: its large equation appears before the worked example, and the sampling explanation occupies nearly two-thirds of the slide. The left column retains the stored seeds 5, 4, 14, 7; XOR with edge hash 6; results 3, 2, 8, 1; threshold 7; and the edge-membership equation.
 
-The narration credits MixGreedy at the outset, then concentrates on XOR reconstruction and its fusion with vectorized updates. It explains the undirected component example briefly as the operation being accelerated. This preserves the original technical concepts for a CS faculty audience and connects directly to **Compute more, move less** on slide 10.
+The narration leads with hash-based edge sampling and follows its role in reconstruction, fused sample updates, and DiFuseR scheduling. MixGreedy is credited when the supporting component example is introduced. It explains the undirected component example briefly as the operation being accelerated. This preserves the original technical concepts for a CS faculty audience and connects directly to **Compute more, move less** on slide 10.
 
-The exact expression `X_r XOR h(u,v)` is emphasized on slide 9. Its role extends beyond reconstructing samples: the narration explicitly previews DiFuseR's use of sample-key sorting for scheduling. Slide 14 repeats the expression and explains that FASST sorts the input keys, preserving their sample states and decisions. It does not sort each edge's XOR outputs or assume an arbitrary hash would yield the same grouping.
+The exact expression `X_r XOR h(u,v)` anchors slide 9. The methodology summary on slide 20 connects its roles in fused batched execution and DiFuseR scheduling. Its role extends beyond reconstructing samples: the narration explicitly previews DiFuseR's use of sample-key sorting for scheduling. Slide 14 repeats the expression and explains that FASST sorts the input keys, preserving their sample states and decisions. It does not sort each edge's XOR outputs or assume an arbitrary hash would yield the same grouping.
 
 The merged slide retains the original two slides' combined **1:45** explanation time. The separate copies added to backup in the previous revision have been removed. The existing implementation backup retains the detailed hash definition. All later cumulative timings are adjusted by 30 seconds; the prepared talk now totals 30:50.
 
@@ -48,7 +48,7 @@ Only source material needed to explain the algorithms was consulted. These proje
 ## Rehearsal priorities
 
 - **Slide 8, ending at 8:10:** slowly trace the scattered column and adjacent row. Keep the distinction between logical state accesses and physical memory transactions.
-- **Slide 9, ending at 9:55:** credit MixGreedy for the component step, then focus on XOR reconstruction, sample-lane vectorization, and their performance mechanisms. Use the label example briefly as context and preview DiFuseR scheduling.
+- **Slide 9, ending at 9:55:** lead with the hash-based sampling rule and its worked XOR example; connect reconstruction, sample-lane vectorization, and DiFuseR scheduling. Credit MixGreedy when introducing its component step. Use the label example briefly as context and preview DiFuseR scheduling.
 - **Slide 10, ending at 11:10:** identify the stored graph write/read that fusion removes, then state the result and its sequential comparison scope.
 - **Slide 12, ending at 14:05:** distinguish a register value from a count, then trace the inactive lane through the merge.
 - **Slide 14, ending at 16:45:** follow one sample identity across assignments. Explain why skipping a warp differs from removing a sample's contribution.

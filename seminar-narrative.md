@@ -14,7 +14,7 @@ Use first person for your intellectual decisions and “we” for joint results.
 | 6 | Influence maximization | 1:10 | 4:45 |
 | 7 | The hidden regular dimension | 1:00 | 5:45 |
 | 8 | Reorganizing execution | 2:25 | 8:10 |
-| 9 | Fused sampling and vectorized label updates | 1:45 | 9:55 |
+| 9 | Hash-based edge sampling | 1:45 | 9:55 |
 | 10 | Compute more, move less | 1:15 | 11:10 |
 | 11 | State becomes expensive | 0:45 | 11:55 |
 | 12 | Compact mergeable state | 2:10 | 14:05 |
@@ -100,23 +100,21 @@ Larger batches can reuse more topology, but they also increase the state footpri
 
 We have changed how work is grouped. Let me now show how we recover each sample's active edges, then use them in the label update.
 
-## 9. Fused sampling and vectorized label updates — 1:45
+## 9. Hash-based edge sampling — 1:45
 
-The component computation comes from MixGreedy. My contribution is to accelerate it by fusing edge reconstruction with vectorized updates across samples.
+Hash-based edge sampling is a central contribution of this work. It connects the sample batching we just saw to fused execution and, later, DiFuseR's scheduling strategy.
 
-On the left, store one random seed X-r per sample and a symmetric hash per edge. This seed identifies the sample, separately from the influence source.
+The rule is X-r XOR h of u-v, compared with the edge threshold. We store one random seed per sample and precompute one hash per original edge. For undirected graphs, the hash is symmetric. The random seed identifies the sample, separately from the influence source.
 
-For edge one–four, XOR hash six with the four seeds. The results are three, two, eight, and one. Threshold seven activates samples one, two, and four.
+For edge one–four, XOR hash six with seeds five, four, fourteen, and seven. We get three, two, eight, and one. Threshold seven activates samples one, two, and four.
 
-Keep the expression X-r XOR h of u-v in mind. For a fixed edge, the hash is shared across sample lanes. Later, DiFuseR exploits this exact construction by sorting the sample keys to improve scheduling.
+Reusing those inputs reconstructs the same decisions on every pass. We can therefore sample inside traversal without storing each sampled graph. Repeatability alone does not establish independent edge sampling.
 
-Reusing the inputs reproduces the decisions on every pass and in both directions. Repeatability alone does not establish independent edge sampling.
+For a fixed edge, its hash is shared across sample lanes. We combine it with adjacent sample seeds, then use the resulting mask to update adjacent state. Later, DiFuseR sorts those same sample seeds to exploit structure in the XOR decisions for scheduling.
 
-The right side gives the operation we accelerate. In the undirected case, minimum-label updates identify connected components: vertices one, four, and three converge to label one.
+MixGreedy supplies the component computation shown on the right. The minimum-label example identifies the component containing one, four, and three. My method accelerates these updates through fused sampling and vectorization across samples.
 
-I execute those updates across samples, with adjacent labels in vector lanes and inactive edges masked. One edge access serves several samples, and reconstruction happens inside the traversal. This combines topology reuse and contiguous state access with avoiding stored sampled graphs.
-
-The next slide shows the performance benefit of fused sampling; vectorizing across samples is an additional optimization.
+First, let us look at the performance benefit of avoiding stored sampled graphs.
 
 ## 10. Compute more, move less — 1:15
 
@@ -234,7 +232,7 @@ The important connection is between the schedule and the addresses requested tog
 
 Across these projects, I have repeatedly changed the algorithm around a particular machine cost.
 
-Repeated graph reads led to sample batching and reconstructed decisions. Large exact state led to compact registers with uniform merges. Inactive lanes led to sample ordering and device partitions. Dependent walk addresses led to grouping trajectories through their sampling structure.
+Hash-based edge sampling connects two of these changes: it enables fused, batched execution without stored sampled graphs, and its XOR structure enables DiFuseR's sample-key scheduling. Large exact state led to compact registers with uniform merges. Dependent walk addresses led to grouping trajectories through their sampling structure.
 
 The useful freedom was different each time: the order of execution, the representation, or the way random choices were constructed. The research task was to find that freedom, connect it to a hardware cost, and preserve the result or accuracy the application required.
 
