@@ -426,7 +426,7 @@ Spread is stochastic; influence overlaps.\par}
 \centering\textbf{One sample; parallel neighbors}\par
 \par\vspace{0.03cm}
 \begin{tikzpicture}[x=1.05cm,y=0.50cm,every node/.style={font=\scriptsize}]
-  \foreach \c in {0,...,3}{\node at (\c,0.80) {$r_\c$};}
+  \foreach \c/\sample in {0/1,1/2,2/3,3/4}{\node at (\c,0.80) {$r=\sample$};}
   \foreach \r/\v in {0/2,1/4,2/7,3/9}{
     \node[anchor=east] at (-0.65,-\r) {$v=\v$};
     \node[text=MidGray] at (4,-\r) {$\cdots$};
@@ -449,16 +449,20 @@ Each lane follows a different neighbor.\par
 The lanes access different vertex rows.\par}
 \column{0.48\textwidth}
 \setlength{\parskip}{0pt}
-\centering\textbf{One edge; parallel samples}\par
+\centering\textbf{Edge $1\to4$; parallel samples}\par
 \par\vspace{0.03cm}
 \begin{tikzpicture}[x=1.05cm,y=0.50cm,every node/.style={font=\scriptsize}]
-  \foreach \c in {0,...,3}{\node at (\c,0.80) {$r_\c$};}
+  \foreach \c/\sample in {0/1,1/2,2/3,3/4}{\node at (\c,0.80) {$r=\sample$};}
   \foreach \r/\v in {0/2,1/4,2/7,3/9}{
     \node[anchor=east] at (-0.65,-\r) {$v=\v$};
     \node[text=MidGray] at (4,-\r) {$\cdots$};
     \foreach \c in {0,...,3}{
-      \ifnum\r=2
-        \node[draw=Teal,fill=Teal!18,minimum width=1.02cm,minimum height=0.44cm] at (\c,-\r) {lane \c};
+      \ifnum\r=1
+        \ifnum\c=2
+          \node[draw=MidGray,dashed,fill=Mist,text=MidGray,minimum width=1.02cm,minimum height=0.44cm] at (\c,-\r) {lane \c};
+        \else
+          \node[draw=Teal,fill=Teal!18,minimum width=1.02cm,minimum height=0.44cm] at (\c,-\r) {lane \c};
+        \fi
       \else
         \node[draw=LightGray,fill=Mist,minimum width=1.02cm,minimum height=0.44cm] at (\c,-\r) {};
       \fi
@@ -471,15 +475,15 @@ The lanes access different vertex rows.\par}
 {\small\raggedright
 \textcolor{Teal}{\textbf{One contiguous group of four states}}\par
 \vspace{0.12cm}
-Each lane handles a different sample.\par
-The lanes share one edge operation.\par}
+Edge membership: $\{1,2,4\}$.\par
+Lane 2 (sample 3) is inactive.\par}
 \end{columns}
 \par\vspace{0.24cm}
 \takeaway{Shared topology and adjacent state support updates across sample lanes.}
 \smallsource{Each sample keeps its own state; inactive updates are masked. Larger batches also need more state.}
 \end{frame}
 
-\note{\small\textbf{Slide 8: 145 seconds; finish at 8:10.} Trace the highlighted column and row slowly. Both diagrams use vertex-major storage. Four lanes following different neighbors within one sample access separate rows. Holding an edge fixed and assigning samples to lanes gives adjacent state. These are logical accesses, not fixed transaction counts. Each sample keeps its own state and inactive updates are masked. Larger batches trade topology reuse against footprint and inactive work. Transition to reconstructing each sample's active edges from the edge hash and sample seed.}
+\note{\small\textbf{Slide 8: 145 seconds; finish at 8:10.} Trace the highlighted column and row slowly. Both diagrams use vertex-major storage. Four lanes following different neighbors within one sample access separate rows. Hold edge 1 to 4 fixed, using its membership in samples 1, 2, and 4 from slide 7. Lanes 0 through 3 correspond to samples 1 through 4, with adjacent state in the vertex 4 row. Teal lanes 0, 1, and 3 are active; gray dashed lane 2 belongs to sample 3 and performs no update. These are logical accesses, not fixed transaction counts. Each sample keeps its own state and inactive updates are masked. Larger batches trade topology reuse against footprint and inactive work. Transition to reconstructing each sample's active edges from the edge hash and sample seed.}
 
 % MAIN 09 | 85 seconds | cumulative 9:35
 \begin{frame}{Hash-based edge sampling}

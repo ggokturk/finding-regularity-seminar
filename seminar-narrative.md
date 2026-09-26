@@ -89,9 +89,9 @@ Shared topology gives us reuse. How well the active work lines up becomes a sche
 
 The highlighted cells show one group of four lanes. Both diagrams use vertex-major storage: one row contains the states of several samples for one vertex.
 
-On the left, all four lanes work on sample zero, but each follows a different neighbor. Trace the highlighted column: those neighbor IDs lead to four different vertex rows. Even if the adjacency list is contiguous, these state accesses are scattered.
+On the left, all four lanes work on sample one, but each follows a different neighbor. Trace the highlighted column: those neighbor IDs lead to four different vertex rows. Even if the adjacency list is contiguous, these state accesses are scattered.
 
-On the right, I hold the edge to vertex seven fixed. Trace the highlighted row: the lanes process four samples, so their destination states sit next to each other. One edge access serves several decisions.
+On the right, hold edge one to four fixed, using the membership set from the previous slide: samples one, two, and four. Trace the row for vertex four. Lanes zero through three handle samples one through four, so their destination states sit next to each other. Lanes zero, one, and three are active. Lane two belongs to sample three, where the edge is absent, so it is gray and performs no update. One edge access serves these sample decisions.
 
 The comparison is four scattered state accesses versus one contiguous group of four states. It describes the layout of the data requested together. The number of hardware transactions depends on the machine. Adjacent state supports vector loads on CPUs and adjacent lane accesses on GPUs.
 
