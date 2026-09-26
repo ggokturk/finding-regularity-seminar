@@ -1,8 +1,8 @@
 # Seminar speaker narrative
 
-Prepared delivery: **30:50** across 25 main slides. Reserve **35 minutes** for delivery with pauses and brief interruptions, with **40 minutes as the ceiling**, within the one-hour seminar and interview session. This leaves roughly 20–25 minutes for discussion and interview questions. Rehearse aloud; the per-slide timings are planning targets.
+Prepared delivery: **30:50** across 26 main slides. Reserve **35 minutes** for delivery with pauses and brief interruptions, with **40 minutes as the ceiling**, within the one-hour seminar and interview session. This leaves roughly 20–25 minutes for discussion and interview questions. Rehearse aloud; the per-slide timings are planning targets.
 
-Use first person for your intellectual decisions and “we” for joint results. Give the opening a clear connection to graph learning, then let the execution examples establish the contribution. Slide 7 combines the membership graph with hash-based edge sampling. Slide 8 compares sample-major and vertex-major storage for the same batch. Slide 11 introduces component labels alongside count-distinct sketches; slide 12 explains masked sketch propagation. The SABA performance scope is stated once in the main narrative. Current projects are distinguished from completed work, and the preliminary NeuralBloom compute result is not a full-training speedup.
+Use first person for your intellectual decisions and “we” for joint results. Give the opening a clear connection to graph learning, then let the execution examples establish the contribution. Slide 9 focuses on hash-based edge sampling. Slide 12 introduces component labels alongside count-distinct sketches; slide 13 explains masked sketch propagation. The SABA performance scope is stated once in the main narrative. Current projects are distinguished from completed work, and the preliminary NeuralBloom compute result is not a full-training speedup.
 
 | Slide | Topic | Time | Cumulative |
 |---|---|---:|---:|
@@ -12,25 +12,26 @@ Use first person for your intellectual decisions and “we” for joint results.
 | 4 | The architectural mismatch | 1:30 | 2:50 |
 | 5 | The research question | 0:45 | 3:35 |
 | 6 | Influence maximization | 1:10 | 4:45 |
-| 7 | Hash-based sampling on a shared graph | 2:25 | 7:10 |
-| 8 | Sample-major versus vertex-major storage | 2:25 | 9:35 |
-| 9 | Compute more, move less | 1:15 | 10:50 |
-| 10 | State becomes expensive | 0:45 | 11:35 |
-| 11 | Component labels and count-distinct sketches | 1:20 | 12:55 |
-| 12 | Sketch propagation across sample lanes | 1:10 | 14:05 |
-| 13 | CPU, GPU, and distributed mappings | 1:00 | 15:05 |
-| 14 | Sample-space scheduling | 1:40 | 16:45 |
-| 15 | Distributed evidence | 1:00 | 17:45 |
-| 16 | Random walks break alignment | 1:15 | 19:00 |
-| 17 | Bouquet arrangement | 2:15 | 21:15 |
-| 18 | The corrected sampler | 1:30 | 22:45 |
-| 19 | Cache behavior and evidence scope | 1:00 | 23:45 |
-| 20 | A coherent methodology | 0:50 | 24:35 |
-| 21 | Limits and cost models | 0:40 | 25:15 |
-| 22 | Ongoing work in graph learning | 1:25 | 26:40 |
-| 23 | Reconstruction and trajectory execution | 1:45 | 28:25 |
-| 24 | An adaptive-scheduling project | 1:55 | 30:20 |
-| 25 | Closing | 0:30 | 30:50 |
+| 7 | The hidden regular dimension | 1:00 | 5:45 |
+| 8 | Reorganizing execution | 2:25 | 8:10 |
+| 9 | Hash-based edge sampling | 1:25 | 9:35 |
+| 10 | Compute more, move less | 1:15 | 10:50 |
+| 11 | State becomes expensive | 0:45 | 11:35 |
+| 12 | Component labels and count-distinct sketches | 1:20 | 12:55 |
+| 13 | Sketch propagation across sample lanes | 1:10 | 14:05 |
+| 14 | CPU, GPU, and distributed mappings | 1:00 | 15:05 |
+| 15 | Sample-space scheduling | 1:40 | 16:45 |
+| 16 | Distributed evidence | 1:00 | 17:45 |
+| 17 | Random walks break alignment | 1:15 | 19:00 |
+| 18 | Bouquet arrangement | 2:15 | 21:15 |
+| 19 | The corrected sampler | 1:30 | 22:45 |
+| 20 | Cache behavior and evidence scope | 1:00 | 23:45 |
+| 21 | A coherent methodology | 0:50 | 24:35 |
+| 22 | Limits and cost models | 0:40 | 25:15 |
+| 23 | Ongoing work in graph learning | 1:25 | 26:40 |
+| 24 | Reconstruction and trajectory execution | 1:45 | 28:25 |
+| 25 | An adaptive-scheduling project | 1:55 | 30:20 |
+| 26 | Closing | 0:30 | 30:50 |
 
 ## 1. Opening — 0:20
 
@@ -74,41 +75,47 @@ Look at sample one. Starting from vertex one, we reach one, two, and four: three
 
 For several seeds, we count their combined reach once per vertex. Evaluating candidate additions repeats this computation across many samples of the same underlying graph. That repeated graph access is the cost I want to reduce.
 
-## 7. Hash-based sampling on a shared graph — 2:25
+## 7. The hidden regular dimension — 1:00
 
-The four simulations share an underlying graph. The sets on its edges show which samples contain each edge. Follow the highlighted edge from one to four: it is active in samples one, two, and four.
+My design decision is to organize the computation across samples so one edge access serves several updates.
 
-My design is to process samples together, sharing access to the original topology. Those membership sets are a way to visualize the decisions; we do not have to store them. Hash-based edge sampling reconstructs them as we traverse.
+The stacked graph copies make that opportunity visible. Follow edge one to four across the layers. It is active in samples one, two, and four, but absent from sample three. The membership set on the right records those same decisions on one graph.
 
-The rule above the graph is X-r XOR h of u-v, compared with the edge threshold. We precompute one hash per original edge and store one random seed per sample. The seed identifies a simulation, separately from the source whose influence we estimate.
+Hold that edge fixed and assign the four samples to four lanes. The topology access is shared. Each sample retains its own state, and the inactive sample is masked.
 
-The calculation on the right belongs to the highlighted edge. Its hash is six. XOR that with the sample seeds five, four, fourteen, and seven: the results are three, two, eight, and one. Threshold seven activates samples one, two, and four, exactly the membership set shown on that edge.
+Shared topology gives us reuse. How well the active work lines up becomes a scheduling question later. First, the next slide shows what this mapping does to memory access.
 
-The example graph is directed, so the two orientations identify different edges. In the undirected case, we use a symmetric hash so both orientations agree.
+## 8. Reorganizing execution — 2:25
 
-Reusing the inputs reconstructs the same decision on every pass. This establishes repeatability; the required sampling distribution needs separate justification.
+The highlighted cells show one group of four lanes. Both diagrams use vertex-major storage: one row contains the states of several samples for one vertex.
 
-Now hold one edge fixed and assign samples to lanes. One topology access serves several sample decisions and updates, with inactive samples masked. The same hash structure also enables better scheduling, which I will explain later.
+On the left, all four lanes work on sample zero, but each follows a different neighbor. Trace the highlighted column: those neighbor IDs lead to four different vertex rows. Even if the adjacency list is contiguous, these state accesses are scattered.
 
-Sharing the graph is only part of the execution design. Each sample still owns vertex state. Where should we store those states so the lanes can access them efficiently?
+On the right, I hold the edge to vertex seven fixed. Trace the highlighted row: the lanes process four samples, so their destination states sit next to each other. One edge access serves several decisions.
 
-## 8. Sample-major versus vertex-major storage — 2:25
+The comparison is four scattered state accesses versus one contiguous group of four states. It describes the layout of the data requested together. The number of hardware transactions depends on the machine. Adjacent state supports vector loads on CPUs and adjacent lane accesses on GPUs.
 
-Both sides show the same batch: vertex four's state in samples one through four. Lane zero handles sample one, lane one handles sample two, and so on. What changes is the memory layout.
+We still have to perform the required edge–sample work. The change is which updates execute together. Samples can have different active edges and frontiers, so each sample retains its own state and inactive updates are masked. An inactive lane contributes no useful update.
 
-On the left, sample-major storage puts all vertex states for one sample in a row. Rows are contiguous and stored consecutively. To get vertex four's state across four samples, follow the highlighted column: those entries occupy four separate sample rows. Consecutive lanes access locations separated by the number of vertices.
+Larger batches can reuse more topology, but they also increase the state footprint and may include more inactive work. The useful batch size depends on the workload and memory hierarchy.
 
-On the right, vertex-major storage puts all sample states for one vertex in a row. Follow the highlighted bottom row. It contains exactly the same four states, but now they are adjacent in memory. Consecutive lanes access consecutive entries.
+We have changed how work is grouped. Let me now show how we recover each sample's active edges from its random seed and the edge hash.
 
-This storage choice matches the execution order we introduced on the previous slide. When we hold an edge fixed and process its samples together, the destination states can be loaded as a vector on a CPU or accessed by neighboring GPU lanes.
+## 9. Hash-based edge sampling — 1:25
 
-Both layouts contain vertices times samples entries. The layout itself does not reduce that amount of state, and the sampling mask still controls which lanes update. In the preceding example, sample three's edge is inactive. The highlights show the batch's memory positions, not four guaranteed useful updates or a fixed number of hardware transactions.
+Hash-based edge sampling is a central contribution of this work. It connects the sample batching we just saw to fused execution and will also enable better scheduling later.
 
-Graph traversal can still jump between unrelated vertices. The improvement is that each selected vertex exposes a contiguous batch of sample state. Larger batches reuse more topology but also need more state and may include inactive work.
+The rule is X-r XOR h of u-v, compared with the edge threshold. We store one random seed per sample and precompute one hash per original edge. For undirected graphs, the hash is symmetric. The random seed identifies the sample, separately from the influence source.
 
-We have now aligned the storage with sample-parallel execution. Let us look at the cost saved by reconstructing sampled edges instead of materializing sampled graphs.
+For edge one–four, XOR hash six with seeds five, four, fourteen, and seven. We get three, two, eight, and one. Threshold seven activates samples one, two, and four.
 
-## 9. Compute more, move less — 1:15
+Reusing those inputs reconstructs the same decisions on every pass. We can therefore sample inside traversal without storing each sampled graph. Repeatability alone does not establish independent edge sampling.
+
+For a fixed edge, its hash is shared across sample lanes. We combine it with adjacent sample seeds, then use the resulting mask to update adjacent state. We will return to this hash structure later and use it to improve how the work is scheduled.
+
+First, let us look at the performance benefit of avoiding stored sampled graphs.
+
+## 10. Compute more, move less — 1:15
 
 Recovering an edge decision means we do not have to write that decision into a separate sampled graph. The upper pipeline samples the edges, stores the resulting graph, and reads it again during traversal. The lower pipeline has three steps: read the original topology, reconstruct the edge decision, and traverse immediately. These happen within the same traversal, without storing an intermediate sampled graph.
 
@@ -118,7 +125,7 @@ The sequential fused-sampling comparison reports approximately three to twenty-o
 
 We can then combine reconstruction with sample batching. But sharing topology does not make all the state disappear. That is the next bottleneck.
 
-## 10. State becomes expensive — 0:45
+## 11. State becomes expensive — 0:45
 
 This is the same kind of matrix we saw earlier. Every vertex still has separate state for every sample. That gives us vertices times samples entries, which traversal reads and updates. Their representation determines the storage cost and the operations we perform.
 
@@ -126,7 +133,7 @@ Return to sample one: the reached vertices were one, two, and four. Their contri
 
 The next method estimates reach with compact registers. The matrix remains, but its entries and update operations change. That is an approximation decision as well as an architectural one.
 
-## 11. Component labels and count-distinct sketches — 1:20
+## 12. Component labels and count-distinct sketches — 1:20
 
 Here are two representations for the per-sample state.
 
@@ -140,7 +147,7 @@ Seeing vertex four again gives the same hash and leaves the register unchanged. 
 
 The next slide shows how those compact registers merge across sample lanes.
 
-## 12. Sketch propagation across sample lanes — 1:10
+## 13. Sketch propagation across sample lanes — 1:10
 
 Each column is a different stochastic sample. We have the current vertex's register, its neighbor's register, and the active-edge mask supplied by our sampling rule.
 
@@ -152,7 +159,7 @@ The representation gives smaller entries, contiguous sample state, and one unifo
 
 There is an accuracy cost. HyperFuseR checks discrepancies against Monte Carlo evaluations and rebuilds summaries when needed. The sketch is a fast influence oracle within that larger algorithm; the surrounding evaluation and rebuilding still matter.
 
-## 13. CPU, GPU, and distributed mappings — 1:00
+## 14. CPU, GPU, and distributed mappings — 1:00
 
 Follow the same sample entries down the slide. On a CPU, a vector instruction updates adjacent sample states. On a GPU, neighboring threads process neighboring sample states for the same edge. The eight entries are schematic; the physical widths vary.
 
@@ -162,19 +169,19 @@ Sketch propagation stays local. Global source selection requires combining sketc
 
 There is one more choice inside this mapping: which sample identities should occupy adjacent lanes and devices?
 
-## 14. Sample-space scheduling — 1:40
+## 15. Sample-space scheduling — 1:40
 
 For this edge, samples two, four, six, and eight are active. Look at the original assignment: both warps contain two active samples and two inactive samples. Both warps enter the update, although only half their lanes contribute.
 
 Now follow the sample identities to the right. There are still eight samples and four active updates. But one warp contains the active samples, and the other can skip the edge's update altogether. We changed the assignment, not the sampled decisions.
 
-Return to the construction from slide seven: X-r XOR h of u-v, compared with the edge threshold. For a fixed edge, the hash is shared across lanes. DiFuseR's FASST sorts the existing X-r keys before assigning samples to warps and devices, exploiting structure in these XOR threshold decisions.
+Return to the construction from slide nine: X-r XOR h of u-v, compared with the edge threshold. For a fixed edge, the hash is shared across lanes. DiFuseR's FASST sorts the existing X-r keys before assigning samples to warps and devices, exploiting structure in these XOR threshold decisions.
 
 Each sample's state moves with its key, so its edge decisions remain unchanged. We sort the input keys once across the graph. We do not sort the XOR outputs separately for every edge. An arbitrary hash-based sampler would not automatically offer the same grouping.
 
 At device scale, the consequence is similar. If no local sample includes an edge, the device can omit that edge. Sample order therefore affects both lane utilization and the graph data each device needs. The aggregate estimate uses the same sample identities, so their placement becomes a scheduling choice.
 
-## 15. Distributed evidence — 1:00
+## 16. Distributed evidence — 1:00
 
 The reported fixed-workload comparison reaches a geometric-mean speedup of 5.64 on eight A100 GPUs relative to one GPU. The experiment uses two GPUs per node; Friendster is excluded because the one-GPU case does not fit.
 
@@ -184,7 +191,7 @@ Edge overlap, unequal work, and global reductions all limit scaling. Partitionin
 
 This completes the part of the story where we can keep an edge fixed across samples. Random walks will remove that convenient alignment.
 
-## 16. Random walks break alignment — 1:15
+## 17. Random walks break alignment — 1:15
 
 My random-walk work estimates the importance of graph edges to connectivity. It requires many trajectories through the graph, so the cost of those walks becomes central.
 
@@ -196,7 +203,7 @@ The walks can execute independently, but they no longer request the same data. S
 
 So the question changes: can I arrange trajectories so that nearby lanes are likely to request reusable adjacency data?
 
-## 17. Bouquet arrangement — 2:15
+## 18. Bouquet arrangement — 2:15
 
 This is the central scheduling idea in SABA. A bouquet is a group of walks processed together. We draw the random keys first and then choose their execution groups.
 
@@ -210,7 +217,7 @@ Crucially, the walks still own separate states. The two walks at A retain differ
 
 I am therefore using structure in the sampling process to improve the schedule, without requiring permanent agreement between trajectories. But that raises a deeper question: how do we use an initial random key for successive choices without reusing randomness that the earlier choices have already revealed?
 
-## 18. The corrected sampler — 1:30
+## 19. The corrected sampler — 1:30
 
 The next neighbor must be uniform conditional on the path so far. Reproducing a decision is not enough to establish that property.
 
@@ -224,7 +231,7 @@ If the available range is exhausted or the input falls outside the equal-sized b
 
 This establishes sampler validity under the independent-input assumptions. Reordering valid walk contributions is a separate argument. Sorting alone cannot repair an incorrect path distribution.
 
-## 19. Cache behavior and evidence scope — 1:00
+## 20. Cache behavior and evidence scope — 1:00
 
 The orange bar returns to the opening systems question. Direct AVX2 vectorization produced 8.83 percent more last-level cache misses than scalar execution. More arithmetic lanes did not solve the memory problem.
 
@@ -234,7 +241,7 @@ These are measurements of the earlier implementation, not runtime measurements o
 
 The important connection is between the schedule and the addresses requested together. That is what the bouquet example exposed. When assessing an optimization, I want to see both the runtime result and evidence that the architectural bottleneck changed in the expected way.
 
-## 20. A coherent methodology — 0:50
+## 21. A coherent methodology — 0:50
 
 Across these projects, I have repeatedly changed the algorithm around a particular machine cost.
 
@@ -244,7 +251,7 @@ The useful freedom was different each time: the order of execution, the represen
 
 The next question is when each transformation is actually worth its cost.
 
-## 21. Limits and cost models — 0:40
+## 22. Limits and cost models — 0:40
 
 Larger batches reuse more topology, but they also increase the state footprint and can include more inactive lanes. Ordering walks can improve early locality, but sorting costs time and the paths may soon separate.
 
@@ -252,7 +259,7 @@ The same tradeoff appears in sketching and processor placement: smaller state in
 
 So I measure total execution time at the required accuracy. These competing costs are also why I want an adaptive decision rather than a fixed setting for every graph and workload.
 
-## 22. Ongoing work in graph learning — 1:25
+## 23. Ongoing work in graph learning — 1:25
 
 NeuralBloom applies this reasoning to NeuralWalker's input construction. The neural model consumes walks and structural encodings. My work focuses on how we produce that representation efficiently.
 
@@ -262,7 +269,7 @@ The preliminary result is approximately a twofold speedup in walk computation. I
 
 The mechanism is familiar from the earlier graph work: move less intermediate data by reorganizing when computation happens. The new research question is how far fusion should go. Longer fused work can increase register pressure or reduce available parallelism. That makes fusion depth and batch size architectural choices worth studying, rather than assuming one large kernel will always be best.
 
-## 23. Reconstruction and trajectory execution — 1:45
+## 24. Reconstruction and trajectory execution — 1:45
 
 Battus begins with a different task: reconstructing diffusion states between sparse observations of a graph. Both observed endpoints constrain the missing steps.
 
@@ -274,7 +281,7 @@ The current prototype uses deterministic path coordinates, CPU interleaving, and
 
 These projects expand the program in two directions: simplifying the information an algorithm carries, and finding useful execution overlap when locality is limited.
 
-## 24. An adaptive-scheduling project — 1:55
+## 25. An adaptive-scheduling project — 1:55
 
 The long-term question is whether we can make these architecture-aware choices systematically, instead of rediscovering them manually for every irregular algorithm.
 
@@ -288,7 +295,7 @@ The application must supply the legal freedom: dependencies between tasks, owner
 
 Graph walks and NeuralBloom provide concrete initial workloads. The next steps are representation selection and CPU–GPU placement, followed by sparse and dynamic graph problems, sampling-heavy ML, and scientific Monte Carlo. Each extension tests whether the observations and cost model transfer beyond the original graph kernels.
 
-## 25. Closing — 0:30
+## 26. Closing — 0:30
 
 Finding regularity meant sharing topology across samples, choosing compact representations with uniform updates, and arranging trajectories to improve reuse.
 

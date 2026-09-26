@@ -1,25 +1,25 @@
 # Faculty seminar editorial notes
 
-The deck has **25 main slides**, followed by a divider and **14 backup slides**: **40 static PDF pages**. The title is **Finding Regularity: High-Performance Computing for Graph Algorithms**.
+The deck has **26 main slides**, followed by a divider and **14 backup slides**: **41 static PDF pages**. The title is **Finding Regularity: High-Performance Computing for Graph Algorithms**.
 
 Prepared narration totals **30:50**. Reserve **35 minutes** for delivery with pauses and brief interruptions, with **40 minutes as the ceiling** in the one-hour seminar and interview session. This leaves roughly 20–25 minutes for discussion and interview questions. Timings are rehearsal targets, not measured delivery times.
 
 ## Opening revision for a CS faculty audience
 
-Slide 7 combines the shared graph's sample-membership labels with the hash-based sampling rule and its numeric example. The highlighted edge 1 to 4 is labeled with samples {1,2,4}; the adjacent XOR calculation reconstructs precisely that membership. The standalone sampling slide is folded into this explanation. Directed arcs retain their identities; symmetric hashing is stated only for the undirected case.
+Slide 9 is devoted to **Hash-based edge sampling**. The large XOR threshold equation and the original four-sample calculation fill the slide. Its takeaway retains reconstruction and vectorized updates, then previews that the hash structure enables better scheduling later. Component labels are introduced later; this sampling slide does not introduce update idempotence or lock-free execution.
 
-Slide 8 holds the sample batch fixed and compares two actual storage layouts: `state[r][v]` versus `state[v][r]`. The batch consists of vertex 4's state in four samples. Its entries are |V| positions apart in sample-major storage and adjacent in vertex-major storage. Both matrices contain the same state. This replaces the previous comparison of two execution groupings that both used vertex-major storage.
+Slide 11 uses generic state entries to motivate the remaining vertex-by-sample memory cost. Slide 12 puts **MixGreedy's component labels** beside **HyperFuseR's count-distinct sketch registers**. It retains the 1--4--3 example and minimum-label equation on the left and the original leading-zero table on the right. The comparison establishes what each representation stores and how it merges information. MixGreedy is credited for the component computation; the presenter's contribution is accelerating propagation through fused sampling and vectorization.
 
-The distinction is now explicit: slide 7 explains graph membership and reconstruction; slide 8 explains state placement. Hash-based sampling remains central and its scheduling benefit is previewed without introducing lock-free execution or update idempotence here.
+Slide 13 preserves the worked four-sample masked register merge on its own slide. This keeps the exact/approximate representation comparison readable and gives the active-edge mask, inactive sample, and idempotent maximum operation their own explanation.
 
-Slide 10 introduces generic per-sample state costs. Slide 11 compares MixGreedy's component labels with HyperFuseR's count-distinct sketches. Slide 12 retains the masked register merge. The XOR construction returns in FASST on slide 14 and the methodology summary on slide 20.
+The exact expression `X_r XOR h(u,v)` returns on the DiFuseR scheduling slide, now slide 15, and in the methodology summary on slide 21. FASST sorts input keys with their sample state; it does not sort each edge's XOR outputs.
 
-Slide 7 receives the combined 2:25 previously allocated to shared topology and hash-based sampling. Slide 8 retains 2:25 for the memory-layout comparison. The prepared total remains **30:50**, with 25 main slides. Narration, cues, and numbering are synchronized; every slide is static.
+Timing is redistributed: slide 9 takes 1:25; the representation comparison takes 1:20; masked sketch propagation takes 1:10. The full prepared delivery remains **30:50**. All slide numbers, cumulative timings, narration, and embedded cues are synchronized. Slides remain static.
 
 ## Technical boundaries retained
 
-- The component-label example on slide 11 explicitly treats undirected graphs. Its minimum-label update identifies connected components; it is not a directed reachability algorithm.
-- The main-slide XOR construction distinguishes ordered directed edges from symmetric undirected hashes. Reusing keys establishes repeatability across passes and directions, not joint edge independence.
+- The component-label example on slide 12 explicitly treats undirected graphs. Its minimum-label update identifies connected components; it is not a directed reachability algorithm.
+- The main-slide XOR construction uses a symmetric hash for undirected edges. Reusing keys establishes repeatability across passes and directions, not joint edge independence.
 - The fused-sampling comparison supports on-demand sampling. Samples execute separately in that comparison; it does not isolate the sample-lane transformation.
 - Compact registers still occupy a vertex-by-sample structure. They change entry size, operations, and approximation rather than removing that structure's dimensions.
 - A sketch register is a rare-pattern statistic, not an exact cardinality. Monte Carlo evaluation and error-adaptive rebuilding remain part of HyperFuseR.
@@ -47,15 +47,15 @@ Only source material needed to explain the algorithms was consulted. These proje
 
 ## Rehearsal priorities
 
-- **Slide 7, ending at 7:10:** trace edge 1 to 4 from the graph into the XOR calculation and back to its membership {1,2,4}. Explain that membership sets are reconstructed, not stored.
-- **Slide 8, ending at 9:35:** keep the batch fixed while comparing actual storage layouts. Identify which dimension is contiguous and the stride between lane accesses.
-- **Slide 9, ending at 10:50:** explain the avoided sampled-graph write/read and state the sequential comparison scope.
-- **Slide 11, ending at 12:55:** introduce component labels and sketches together; credit MixGreedy and distinguish component identity from a rare-pattern statistic.
-- **Slide 12, ending at 14:05:** trace the inactive sample through the masked merge and explain accuracy/rebuilding scope.
-- **Slide 14, ending at 16:45:** follow sample identities and connect scheduling to the XOR construction on slide 7.
-- **Slides 17–18, ending at 22:45:** explain locality opportunity, then conditional residual uniformity.
-- **Slide 19, ending at 23:45:** state the historical measurement scope once.
-- **Slide 24, ending at 30:20:** present the future scheduler as proposed work, with tuned baselines, unseen workloads, total cost, and fixed accuracy.
+- **Slide 8, ending at 8:10:** trace the scattered column and adjacent row; distinguish logical accesses from physical memory transactions.
+- **Slide 9, ending at 9:35:** focus on the XOR sampling rule, its numeric example, and its roles in reconstruction, vectorization, and DiFuseR scheduling.
+- **Slide 10, ending at 10:50:** explain the avoided stored-graph write/read, then state the result and its sequential comparison scope.
+- **Slide 12, ending at 12:55:** introduce component labels and count-distinct registers together. Credit MixGreedy and distinguish exact component identity from a rare-pattern statistic.
+- **Slide 13, ending at 14:05:** trace the inactive sample through the masked merge; explain idempotence and the accuracy/rebuilding scope.
+- **Slide 15, ending at 16:45:** follow a sample identity across assignments; explain whole-warp skips without removing sample contributions.
+- **Slides 18–19, ending at 22:45:** explain locality opportunity, then conditional residual uniformity.
+- **Slide 20, ending at 23:45:** state the historical measurement scope once.
+- **Slide 25, ending at 30:20:** present the future scheduler as proposed work with tuned baselines, unseen workloads, total cost, and fixed accuracy.
 
 The 35-minute delivery slot includes about four minutes beyond the prepared narration. Rehearse aloud with pointing and pauses. If discussion runs long, shorten synthesis and current-project detail while preserving time to explain the independent research agenda.
 
