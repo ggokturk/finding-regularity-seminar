@@ -93,7 +93,7 @@ On the left, all four lanes work on sample one, but each follows a different nei
 
 On the right, hold edge one to four fixed, using the membership set from the previous slide: samples one, two, and four. Trace the row for vertex four. Lanes zero through three handle samples one through four, so their destination states sit next to each other. Lanes zero, one, and three are active. Lane two belongs to sample three, where the edge is absent, so it is gray and performs no update. One edge access serves these sample decisions.
 
-The comparison is four scattered state accesses versus one contiguous group of four states. It describes the layout of the data requested together. The number of hardware transactions depends on the machine. Adjacent state supports vector loads on CPUs and adjacent lane accesses on GPUs.
+The scattered accesses can touch separate cache lines, using only a small part of each transfer. Cache misses expose memory latency. On the right, sample addresses are sequential within the batch, supporting CPU vector loads and coalesced GPU accesses. More useful bytes per transfer can improve bandwidth use and update throughput. The graph still selects irregular vertex rows. The gain depends on cache residency, alignment, and the active mask; it does not mean each DRAM request becomes faster.
 
 We still have to perform the required edge–sample work. The change is which updates execute together. Samples can have different active edges and frontiers, so each sample retains its own state and inactive updates are masked. An inactive lane contributes no useful update.
 

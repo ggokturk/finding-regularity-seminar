@@ -424,7 +424,7 @@ Spread is stochastic; influence overlaps.\par}
 \column{0.48\textwidth}
 \setlength{\parskip}{0pt}
 \centering\textbf{One sample; parallel neighbors}\par
-\par\vspace{0.03cm}
+\par\vspace{0cm}
 \begin{tikzpicture}[x=1.05cm,y=0.50cm,every node/.style={font=\scriptsize}]
   \foreach \c/\sample in {0/1,1/2,2/3,3/4}{\node at (\c,0.80) {$r=\sample$};}
   \foreach \r/\v in {0/2,1/4,2/7,3/9}{
@@ -439,18 +439,19 @@ Spread is stochastic; influence overlaps.\par}
     }
   }
 \end{tikzpicture}
-\par\vspace{0.05cm}
+\par
 
-\vspace{0.03cm}
+\vspace{0cm}
 {\small\raggedright
 \textcolor{Orange}{\textbf{Four scattered state accesses}}\par
-\vspace{0.12cm}
-Each lane follows a different neighbor.\par
-The lanes access different vertex rows.\par}
+\vspace{0.02cm}
+Random accesses across vertex rows.\par
+Cache misses expose memory latency.\par
+Often few useful bytes per cache line.\par}
 \column{0.48\textwidth}
 \setlength{\parskip}{0pt}
 \centering\textbf{$(1\to4)\in G_r,\ r\in\{1,2,4\}$; parallel samples}\par
-\par\vspace{0.03cm}
+\par\vspace{0cm}
 \begin{tikzpicture}[x=1.05cm,y=0.50cm,every node/.style={font=\scriptsize}]
   \foreach \c/\sample in {0/1,1/2,2/3,3/4}{\node at (\c,0.80) {$r=\sample$};}
   \foreach \r/\v in {0/2,1/4,2/7,3/9}{
@@ -469,21 +470,22 @@ The lanes access different vertex rows.\par}
     }
   }
 \end{tikzpicture}
-\par\vspace{0.05cm}
+\par
 
-\vspace{0.03cm}
+\vspace{0cm}
 {\small\raggedright
 \textcolor{Teal}{\textbf{One contiguous group of four states}}\par
-\vspace{0.12cm}
-Edge membership: $\{1,2,4\}$.\par
-Lane 2 (sample 3) is inactive.\par}
+\vspace{0.02cm}
+Sequential addresses within each batch.\par
+Vector loads / coalesced GPU accesses.\par
+Can improve bandwidth use and throughput.\par}
 \end{columns}
-\par\vspace{0.24cm}
+\par\vspace{0.04cm}
 \takeaway{Shared topology and adjacent state support updates across sample lanes.}
-\smallsource{Each sample keeps its own state; inactive updates are masked. Larger batches also need more state.}
+\smallsource{Lane 2 (sample 3) is inactive and masked. Larger batches also need more state.}
 \end{frame}
 
-\note{\small\textbf{Slide 8: 145 seconds; finish at 8:10.} Trace the highlighted column and row slowly. Both diagrams use vertex-major storage. Four lanes following different neighbors within one sample access separate rows. Hold edge 1 to 4 fixed, using its membership in samples 1, 2, and 4 from slide 7. Lanes 0 through 3 correspond to samples 1 through 4, with adjacent state in the vertex 4 row. Teal lanes 0, 1, and 3 are active; gray dashed lane 2 belongs to sample 3 and performs no update. These are logical accesses, not fixed transaction counts. Each sample keeps its own state and inactive updates are masked. Larger batches trade topology reuse against footprint and inactive work. Transition to reconstructing each sample's active edges from the edge hash and sample seed.}
+\note{\small\textbf{Slide 8: 145 seconds; finish at 8:10.} Trace the highlighted column and row slowly. Both diagrams use vertex-major storage. Four lanes following different neighbors within one sample access separate rows. Hold edge 1 to 4 fixed, using its membership in samples 1, 2, and 4 from slide 7. Lanes 0 through 3 correspond to samples 1 through 4, with adjacent state in the vertex 4 row. Teal lanes 0, 1, and 3 are active; gray dashed lane 2 belongs to sample 3 and performs no update. Connect scattered vertex addresses to cache misses, exposed memory latency, and low useful bytes per cache line. Consecutive sample addresses support CPU vector loads and GPU coalescing, increasing useful bytes per transfer and potentially update throughput. The graph still selects irregular vertex rows; sequential addresses apply within each batch. These are logical accesses, not fixed transaction counts or a claim of lower intrinsic DRAM latency. Benefits depend on cache residency, alignment, state size, masking, and available memory parallelism. Each sample keeps its own state and inactive updates are masked. Larger batches trade topology reuse against footprint and inactive work. Transition to reconstructing each sample's active edges from the edge hash and sample seed. Memory-coalescing reference: NVIDIA CUDA C++ Best Practices Guide, Coalesced Access to Global Memory, \url{https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/}.}
 
 % MAIN 09 | 85 seconds | cumulative 9:35
 \begin{frame}{Hash-based edge sampling}
